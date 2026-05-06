@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import './App.css';
+import Logo from './logo.png';
 
 /* ═══════════════════════════ DATA ═══════════════════════════ */
 
@@ -121,42 +122,34 @@ export default function App() {
 /* ═══════════════════════════ HOME ═══════════════════════════ */
 function Home({ setTab }) {
   const cards = [
-    { icon:"🤖", title:"مساعد ذكي",        desc:"اسأل عن أي شيء يخص التنس واحصل على إجابة فورية", tab:"chat",  col:"#16a34a" },
-    { icon:"❓", title:"اختبار المعرفة",    desc:"10 أسئلة متنوعة لاختبار مستواك في التنس",          tab:"quiz",  col:"#ca8a04" },
-    { icon:"📖", title:"قاموس المصطلحات",   desc:"15 مصطلح تنسي بشرح عربي وإنجليزي واضح",           tab:"dict",  col:"#0284c7" },
-    { icon:"📊", title:"الإحصائيات",        desc:"تتبّع أسئلتك وأداءك في الاختبارات",               tab:"stats", col:"#7c3aed" },
+    { icon:"🤖", title:"المساعد", desc:"تحدث مع AI Tennis", tab:"chat" },
+    { icon:"❓", title:"اختبار", desc:"اختبر معرفتك", tab:"quiz" },
+    { icon:"📖", title:"القاموس", desc:"مصطلحات التنس", tab:"dict" },
+    { icon:"📊", title:"الإحصائيات", desc:"تتبع.progress", tab:"stats" },
   ];
   return (
-    <div className="section">
-      <div className="hero">
-        <div className="hero-ball">🎾</div>
-        <h1 className="hero-title">مساعد التنس الذكي</h1>
-        <p className="hero-sub">مشروع تخرج يجمع الذكاء الاصطناعي مع عالم التنس<br/>اسأل · تعلّم · اختبر نفسك</p>
-        <button className="hero-btn" onClick={()=>setTab("chat")}>ابدأ المحادثة 🎾</button>
+    <div className="home-section">
+      <div className="home-logo-box">
+        <div className="home-logo">
+          <img src={Logo} alt="Tennis Bot" />
+        </div>
       </div>
-
-      <div className="cards-grid">
+      
+      <h1 className="home-title">تنس بوت 🎾</h1>
+      <p className="home-sub">مساعدك الذكي للتنس<br/>اسأل · تعلم · انطلق</p>
+      
+      <button className="home-cta" onClick={()=>setTab("chat")}>
+        🚀 ابدأ الآن
+      </button>
+      
+      <div className="home-cards">
         {cards.map(c => (
-          <button key={c.tab} className="feat-card" style={{"--col":c.col}} onClick={()=>setTab(c.tab)}>
-            <div className="feat-icon">{c.icon}</div>
-            <div className="feat-title">{c.title}</div>
-            <div className="feat-desc">{c.desc}</div>
-            <div className="feat-arrow">← اضغط للدخول</div>
+          <button key={c.tab} className="home-card" onClick={()=>setTab(c.tab)}>
+            <span className="home-card-icon">{c.icon}</span>
+            <span className="home-card-title">{c.title}</span>
+            <span className="home-card-desc">{c.desc}</span>
           </button>
         ))}
-      </div>
-
-      <div className="about-box">
-        <h2 className="about-title">📋 عن المشروع</h2>
-        <p className="about-text">
-          تطبيق ويب تفاعلي متخصص في رياضة التنس، يستخدم الذكاء الاصطناعي لتوفير إجابات دقيقة
-          لكل ما يتعلق بهذه الرياضة. يهدف إلى نشر الوعي الرياضي وتسهيل تعلّم قواعد وأسس التنس.
-        </p>
-        <div className="tech-row">
-          {["React.js","OpenRouter API","Gemini Flash","JavaScript"].map(t=>(
-            <span key={t} className="tech-tag">{t}</span>
-          ))}
-        </div>
       </div>
     </div>
   );
