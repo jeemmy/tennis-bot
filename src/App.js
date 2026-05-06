@@ -135,7 +135,7 @@ function Home({ setTab }) {
         </div>
       </div>
       
-      <h1 className="home-title">تنس بوت 🎾</h1>
+      <h1 className="home-title">تنس <span>بوت</span> 🎾</h1>
       <p className="home-sub">مساعدك الذكي للتنس<br/>اسأل · تعلم · انطلق</p>
       
       <button className="home-cta" onClick={()=>setTab("chat")}>
@@ -589,11 +589,11 @@ function Stats({ stats }) {
 
 /* ═══════════════════════════ CSS ═══════════════════════════ */
 const STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@300;400;500;700;800&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Tajawal', sans-serif; background: #060d1a; color: #fff; }
-button { font-family: 'Tajawal', sans-serif; cursor: pointer; transition: all .2s; }
+body { font-family: 'Noto Sans Arabic', 'Noto Naskh Arabic', sans-serif; background: #060d1a; color: #fff; }
+button { font-family: 'Noto Sans Arabic', 'Noto Naskh Arabic', sans-serif; cursor: pointer; transition: all .2s; }
 button:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
 button:disabled { cursor: not-allowed; opacity: 0.5; }
 textarea, input { font-family: 'Tajawal', sans-serif; }
@@ -743,22 +743,31 @@ textarea:focus, input:focus { outline: none; }
 .bottom-icon { font-size: 20px; }
 .bottom-label { font-size: 10px; }
 
-.home-section { text-align: center; padding: 60px 20px 100px; position: relative; overflow: hidden; }
-.home-section::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 400px; height: 400px; background: radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 60%); filter: blur(60px); z-index: 0; }
-.home-logo-box { position: relative; z-index: 1; margin-bottom: 20px; }
-.home-logo { width: 140px; height: 140px; margin: 0 auto; background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05)); border: 2px solid rgba(16,185,129,0.3); border-radius: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 60px rgba(16,185,129,0.2); animation: glow 3s ease-in-out infinite; }
-@keyframes glow { 0%,100%{box-shadow:0 20px 40px rgba(0,0,0,0.4),0 0 40px rgba(16,185,129,0.2)} 50%{box-shadow:0 20px 40px rgba(0,0,0,0.4),0 0 80px rgba(16,185,129,0.4)} }
-.home-logo img { width: 80%; height: 80%; object-fit: contain; }
-.home-title { color: #fff; font-size: 34px; font-weight: 900; margin-bottom: 8px; position: relative; z-index: 1; }
-.home-sub { color: rgba(255,255,255,.5); font-size: 15px; margin-bottom: 30px; position: relative; z-index: 1; line-height: 1.6; }
-.home-cta { background: linear-gradient(135deg,#10b981,#059669); color: #000; border: none; border-radius: 16px; padding: 16px 40px; font-size: 17px; font-weight: 700; box-shadow: 0 10px 30px rgba(16,185,129,0.4); position: relative; z-index: 1; display: inline-block; }
-.home-cta:hover { transform: translateY(-2px); box-shadow: 0 15px 40px rgba(16,185,129,0.5); }
-.home-cards { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin-top: 40px; position: relative; z-index: 1; }
-.home-card { background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.3s; }
-.home-card:hover { border-color: rgba(16,185,129,0.4); transform: translateY(-3px); background: rgba(255,255,255,0.08); }
-.home-card-icon { font-size: 32px; }
-.home-card-title { color: #fff; font-size: 15px; font-weight: 700; }
-.home-card-desc { color: rgba(255,255,255,.4); font-size: 11px; }
+.home-section { text-align: center; padding: 80px 20px 120px; position: relative; overflow: hidden; }
+.home-section::before { content: ''; position: absolute; top: -10%; left: -20%; width: 140%; height: 140%; background: radial-gradient(ellipse at 50% 30%, rgba(16,185,129,0.12) 0%, rgba(14,165,233,0.08) 40%, transparent 70%); filter: blur(30px); z-index: 0; }
+.home-section::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 200px; background: linear-gradient(0deg, #060d1a 0%, transparent 100%); z-index: 1; }
+.home-logo-box { position: relative; z-index: 2; margin-bottom: 28px; }
+.home-logo { width: 160px; height: 160px; margin: 0 auto; background: linear-gradient(145deg, rgba(16,185,129,0.25) 0%, rgba(14,165,233,0.15) 50%, rgba(16,185,129,0.1) 100%); border: 2px solid rgba(16,185,129,0.4); border-radius: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 80px rgba(16,185,129,0.25), inset 0 1px 0 rgba(255,255,255,0.15); animation: float 4s ease-in-out infinite, glow-pulse 3s ease-in-out infinite; position: relative; }
+@keyframes float { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-8px) rotate(2deg)} }
+@keyframes glow-pulse { 0%,100%{box-shadow:0 25px 50px rgba(0,0,0,0.5),0 0 60px rgba(16,185,129,0.2)} 50%{box-shadow:0 25px 50px rgba(0,0,0,0.5),0 0 100px rgba(16,185,129,0.4)} }
+.home-logo img { width: 85%; height: 85%; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
+.home-title { color: #fff; font-size: 42px; font-weight: 900; margin-bottom: 12px; position: relative; z-index: 2; letter-spacing: -0.5px; text-shadow: 0 4px 20px rgba(16,185,129,0.3); font-family: 'Noto Naskh Arabic', 'Noto Sans Arabic', sans-serif; }
+.home-title span { background: linear-gradient(135deg, #4ade80 0%, #0ea5e9 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.home-sub { color: rgba(255,255,255,0.6); font-size: 18px; margin-bottom: 36px; position: relative; z-index: 2; line-height: 1.8; font-weight: 400; }
+.home-cta { background: linear-gradient(135deg, #10b981 0%, #059669 50%, #0ea5e9 100%); color: #fff; border: none; border-radius: 24px; padding: 18px 48px; font-size: 18px; font-weight: 700; box-shadow: 0 15px 40px rgba(16,185,129,0.4), 0 0 0 0 rgba(16,185,129,0.5); position: relative; z-index: 2; display: inline-block; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden; }
+.home-cta::before { content: ''; position: absolute; top: 0; left: -100%; width: 200%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.6s; }
+.home-cta:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 20px 50px rgba(16,185,129,0.5), 0 0 0 4px rgba(16,185,129,0.3); }
+.home-cta:hover::before { left: 100%; }
+.home-cta:active { transform: translateY(-1px) scale(1); }
+.home-cards { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-top: 50px; position: relative; z-index: 2; }
+.home-card { background: linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; }
+.home-card::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 100%; height: 100%; background: radial-gradient(circle at 50% 0%, rgba(16,185,129,0.15) 0%, transparent 60%); opacity: 0; transition: opacity 0.4s; }
+.home-card:hover { border-color: rgba(16,185,129,0.4); transform: translateY(-6px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 30px rgba(16,185,129,0.15); }
+.home-card:hover::before { opacity: 1; }
+.home-card-icon { font-size: 36px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); transition: transform 0.3s; }
+.home-card:hover .home-card-icon { transform: scale(1.1); }
+.home-card-title { color: #fff; font-size: 16px; font-weight: 700; }
+.home-card-desc { color: rgba(255,255,255,0.4); font-size: 12px; }
 
 @media (max-width: 640px) {
   .cards-grid { grid-template-columns: 1fr; }
