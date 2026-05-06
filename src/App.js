@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import './App.css';
 
 /* ═══════════════════════════ DATA ═══════════════════════════ */
 
@@ -168,10 +169,146 @@ function Chat({ addQuestion }) {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false); // وضع المحادثة الصوتية الحية
+  const recognitionRef = useRef(null);
+  const sendTimeoutRef = useRef(null);
   const endRef = useRef(null);
 
   useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[msgs,loading]);
 
+  // بدء التعرف على الصوت
+  const startVoiceRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('المتصفح لا يدعم التعرف على الصوت');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ar-SA';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.onresult = (event) => {
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setInput(transcript);
+
+      // إذا كان في وضع المحادثة الصوتية الحية
+      if (voiceMode) {
+        // إلغاء المؤقت السابق
+        if (sendTimeoutRef.current) clearTimeout(sendTimeoutRef.current);
+        
+        // إذا انتهى الكلام (final result)
+        if (event.results[event.results.length - 1].isFinal) {
+          if (transcript.trim().length > 0) {
+            // إرسال تلقائي بعد التوقف بـ 1.5 ثانية
+            sendTimeoutRef.current = setTimeout(() => {
+              if (transcript.trim()) {
+                handleVoiceSend(transcript);
+              }
+            }, 1500);
+          }
+        }
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  };
+
+  // إيقاف التعرف على الصوت
+  const stopVoiceRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    if (sendTimeoutRef.current) {
+      clearTimeout(sendTimeoutRef.current);
+    }
+    setIsRecording(false);
+  };
+
+  // إرسال الصوت للمادثة
+  const handleVoiceSend = async (text) => {
+    const t = text.trim();
+    if (!t || loading) return;
+    
+    // إيقاف التعرف على الصوت مؤقتاً أثناء إرسال الرسالة
+    stopVoiceRecognition();
+    
+    setInput("");
+    const next = [...msgs, { role: "user", content: t }];
+    setMsgs(next); setLoading(true); addQuestion();
+
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.REACT_APP_OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "http://localhost:3000"
+        },
+        body: JSON.stringify({
+          model: "google/gemma-4-31b-it:free", 
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            ...next.map(m => ({ role: m.role, content: m.content }))
+          ]
+        })
+      });
+
+      const d = await res.json();
+      
+      if (!res.ok) {
+        const errorMsg = d?.error?.message || d?.message || "حدث خطأ في الاتصال بـ API";
+        setMsgs([...next, { role: "assistant", content: `❌ ${errorMsg}` }]);
+      } else {
+        const reply = d.choices?.[0]?.message?.content || "حدث خطأ في استلام الرد.";
+        setMsgs([...next, { role: "assistant", content: reply }]);
+        
+        // تشغيل صوت الرد تلقائياً في وضع المحادثة الصوتية
+        if (voiceMode) {
+          setTimeout(() => speakText(reply), 500);
+        }
+      }
+
+    } catch (error) {
+      setMsgs([...next, { role: "assistant", content: `❌ تعذّر الاتصال: ${error.message}` }]);
+    } finally { 
+      setLoading(false);
+      // إعادة تشغيل التعرف على الصوت إذا كان في وضع المحادثة الصوتية
+      if (voiceMode) {
+        setTimeout(() => startVoiceRecognition(), 1000);
+      }
+    }
+  };
+
+  // تحويل النص للحديث (Text-to-Speech)
+  const speakText = (text) => {
+    if (!window.speechSynthesis) return;
+    const clean = (text || '').replace(/<[^>]+>/g, '');
+    const utter = new SpeechSynthesisUtterance(clean);
+    const hasArabic = /[\u0600-\u06FF]/.test(clean);
+    utter.lang = hasArabic ? 'ar-SA' : 'en-US';
+    utter.rate = 1;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  };
+
+  // إرسال نص عادي
   const send = async text => {
     const t = (text||input).trim();
     if (!t||loading) return;
@@ -199,7 +336,6 @@ function Chat({ addQuestion }) {
       const d = await res.json();
       
       if (!res.ok) {
-        console.error("API Error:", d);
         const errorMsg = d?.error?.message || d?.message || "حدث خطأ في الاتصال بـ API";
         setMsgs([...next, { role: "assistant", content: `❌ ${errorMsg}` }]);
       } else {
@@ -208,12 +344,24 @@ function Chat({ addQuestion }) {
       }
 
     } catch (error) {
-      console.error("Fetch error:", error);
       setMsgs([...next, { role: "assistant", content: `❌ تعذّر الاتصال: ${error.message}` }]);
     } finally { setLoading(false); }
   };
 
   const fmt = t => t.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br/>");
+
+  // تفعيل/إلغاء وضع المحادثة الصوتية الحية
+  const toggleVoiceMode = () => {
+    if (voiceMode) {
+      // إلغاء وضع المحادثة الصوتية
+      stopVoiceRecognition();
+      setVoiceMode(false);
+    } else {
+      // تفعيل وضع المحادثة الصوتية
+      setVoiceMode(true);
+      startVoiceRecognition();
+    }
+  };
 
   return (
     <div className="chat-wrap">
@@ -221,9 +369,9 @@ function Chat({ addQuestion }) {
         <span className="chat-hdr-av">🎾</span>
         <div>
           <div className="chat-hdr-title">المساعد الذكي</div>
-          <div className="chat-hdr-sub">متخصص في التنس فقط</div>
+          <div className="chat-hdr-sub">{voiceMode ? "🎤 محادثة صوتية حية" : "متخصص في التنس فقط"}</div>
         </div>
-        <span className="online-dot"/>
+        <span className={`online-dot ${voiceMode ? 'recording' : ''}`}/>
       </div>
 
       <div className="chat-body">
@@ -231,6 +379,9 @@ function Chat({ addQuestion }) {
           <div key={i} className={`msg-row ${m.role}`}>
             {m.role==="assistant"&&<span className="av bot">🎾</span>}
             <div className={`bubble ${m.role}`} dangerouslySetInnerHTML={{__html:fmt(m.content)}}/>
+            {m.role==="assistant"&&(
+              <button className="tts-btn" aria-label="تشغيل صوتي" onClick={()=>speakText(m.content)}>🔊</button>
+            )}
             {m.role==="user"&&<span className="av user">👤</span>}
           </div>
         ))}
@@ -252,15 +403,44 @@ function Chat({ addQuestion }) {
         </div>
       )}
 
+      <div className="voice-controls">
+        <button 
+          className={`voice-mode-btn ${voiceMode ? 'active' : ''}`}
+          onClick={toggleVoiceMode}
+          title={voiceMode ? "إيقاف المحادثة الصوتية" : "بدء محادثة صوتية حية"}
+        >
+          {voiceMode ? "⏹️ إيقاف" : "🎤 محادثة صوتية"}
+        </button>
+      </div>
+
       <div className="input-bar">
-        <textarea className="ta" value={input} rows={1} disabled={loading}
-          placeholder="اسألني عن التنس..."
+        {voiceMode && (
+          <div className="voice-indicator">
+            {isRecording ? "🎤 جاري الاستماع..." : "⏳ بانتظار发言..."}
+          </div>
+        )}
+        <input 
+          className="ta" 
+          value={input} 
+          disabled={loading}
+          placeholder={voiceMode ? "تحدث الآن..." : "اسألني عن التنس..."}
           onChange={e=>setInput(e.target.value)}
           onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} }}
         />
+        {!voiceMode && (
+          <button 
+            className={`mic-btn ${isRecording ? 'recording' : ''}`}
+            onClick={isRecording ? stopVoiceRecognition : startVoiceRecognition}
+            title={isRecording ? "إيقاف التسجيل" : "بدء التسجيل الصوتي"}
+          >
+            {isRecording ? "⏹️" : "🎤"}
+          </button>
+        )}
         <button className="send-btn" disabled={loading||!input.trim()} onClick={()=>send()}>➤</button>
       </div>
-      <div className="input-hint">Enter للإرسال · Shift+Enter سطر جديد</div>
+      <div className="input-hint">
+        {voiceMode ? "تحدث وانتظر الإجابة الآلية - اضغط 'إيقاف' للخروج" : "Enter للإرسال · Shift+Enter سطر جديد"}
+      </div>
     </div>
   );
 }
