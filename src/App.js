@@ -266,17 +266,12 @@ function Chat({ addQuestion }) {
     setInput("");
   };
 
-  // إرسال الصوت للمادثة
-  const handleVoiceSend = async (text) => {
+// دالة إرسال مع إعادة المحاولة التلقائية
+  const sendWithRetry = async (text, retryCount = 0, maxRetries = 3) => {
     const t = text.trim();
     if (!t || loading) return;
     
-    // تحديث lastSent لتجنب التكرار
     lastSentRef.current = t;
-    
-    // إيقاف التعرف على الصوت مؤقتاً أثناء إرسال الرسالة
-    stopVoiceRecognition();
-    
     setInput("");
     const next = [...msgs, { role: "user", content: t }];
     setMsgs(next); setLoading(true); addQuestion();
@@ -301,27 +296,38 @@ function Chat({ addQuestion }) {
       const d = await res.json();
       
       if (!res.ok) {
-        const errorMsg = d?.error?.message || d?.message || "حدث خطأ في الاتصال بـ API";
-        setMsgs([...next, { role: "assistant", content: `❌ ${errorMsg}` }]);
+        // إذا كانت هناك محاولة إعادة محاولات متبقية
+        if (retryCount < maxRetries) {
+          console.log(`Retry ${retryCount + 1}/${maxRetries}...`);
+          setTimeout(() => sendWithRetry(text, retryCount + 1, maxRetries), 1000);
+          return;
+        }
+        // إخفاء رسالة الخطأ من المستخدم
+        setMsgs([...next, { role: "assistant", content: "🔄 جاري إعادة المحاولة..." }]);
       } else {
         const reply = d.choices?.[0]?.message?.content || "حدث خطأ في استلام الرد.";
         setMsgs([...next, { role: "assistant", content: reply }]);
         
-        // تشغيل صوت الرد تلقائياً في وضع المحادثة الصوتية
         if (voiceMode) {
           setTimeout(() => speakText(reply), 500);
         }
       }
 
     } catch (error) {
-      setMsgs([...next, { role: "assistant", content: `❌ تعذّر الاتصال: ${error.message}` }]);
-    } finally { 
-      setLoading(false);
-      // إعادة تشغيل التعرف على الصوت إذا كان في وضع المحادثة الصوتية
-      if (voiceMode) {
-        setTimeout(() => startVoiceRecognition(), 1000);
+      if (retryCount < maxRetries) {
+        console.log(`Retry ${retryCount + 1}/${maxRetries} due to error...`);
+        setTimeout(() => sendWithRetry(text, retryCount + 1, maxRetries), 1500);
+        return;
       }
+      setMsgs([...next, { role: "assistant", content: "🔄 حدث خطأ. حاول مجدداً." }]);
+    } finally { 
+      setLoading(false); 
     }
+  };
+
+  // إرسال الصوت للمادثة ( يستخدم sendWithRetry )
+  const handleVoiceSend = async (text) => {
+    await sendWithRetry(text, 0, 3);
   };
 
   // تحويل النص للحديث (Text-to-Speech)
@@ -336,44 +342,9 @@ function Chat({ addQuestion }) {
     window.speechSynthesis.speak(utter);
   };
 
-  // إرسال نص عادي
+  // إرسال نص عادي (مع إعادة المحاولة)
   const send = async text => {
-    const t = (text||input).trim();
-    if (!t||loading) return;
-    setInput("");
-    const next = [...msgs,{role:"user",content:t}];
-    setMsgs(next); setLoading(true); addQuestion();
-
-    try {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.REACT_APP_OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:3000"
-        },
-        body: JSON.stringify({
-          model: "google/gemma-4-31b-it:free", 
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            ...next.map(m => ({ role: m.role, content: m.content }))
-          ]
-        })
-      });
-
-      const d = await res.json();
-      
-      if (!res.ok) {
-        const errorMsg = d?.error?.message || d?.message || "حدث خطأ في الاتصال بـ API";
-        setMsgs([...next, { role: "assistant", content: `❌ ${errorMsg}` }]);
-      } else {
-        const reply = d.choices?.[0]?.message?.content || "حدث خطأ في استلام الرد.";
-        setMsgs([...next, { role: "assistant", content: reply }]);
-      }
-
-    } catch (error) {
-      setMsgs([...next, { role: "assistant", content: `❌ تعذّر الاتصال: ${error.message}` }]);
-    } finally { setLoading(false); }
+    await sendWithRetry(text || input, 0, 3);
   };
 
   const fmt = t => t.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br/>");
