@@ -587,7 +587,7 @@ function Stats({ stats }) {
       <div className="info-box">
         <h3 className="info-title">عن التطبيق</h3>
         <div className="info-grid">
-          {[["النموذج","Gemini 2.0 Flash (OpenRouter)"],["التقنية","React.js + API"],
+          {[["المصادر","Google Gemini + PDF Files)"],["التقنية","React.js + API"],
             ["الهدف","مساعد متخصص بالتنس فقط"],["اللغات","العربية والإنجليزية"],
             ["السنة","2026"],["النوع","مشروع تخرج"]].map(([k,v])=>(
             <div key={k} className="info-row"><span className="info-k">{k}</span><span className="info-v">{v}</span></div>
