@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import './App.css';
 import Logo from './logo.png';
-import { Home as HomeIcon, MessageSquare, ClipboardCheck, BookOpen, BarChart3, Play, Send, Mic, MicOff, Volume2, ArrowRight, User } from 'lucide-react';
+import { Home as HomeIcon, MessageSquare, ClipboardCheck, BookOpen, BarChart3, Play, Send, Mic, MicOff, Volume2, ArrowRight } from 'lucide-react';
 import { CircleDot } from 'lucide-react';
 
 /* ═══════════════════════════ DATA ═══════════════════════════ */
@@ -404,17 +404,14 @@ function Chat({ addQuestion }) {
       <div className={`chat-body ${voiceMode ? 'with-voice' : ''}`}>
         {msgs.map((m,i)=>(
           <div key={i} className={`msg-row ${m.role}`}>
-            {m.role==="assistant"&&<span className="av bot"><CircleDot size={16} color="#4ade80" /></span>}
             <div className={`bubble ${m.role}`} dangerouslySetInnerHTML={{__html:fmt(m.content)}}/>
             {m.role==="assistant"&&(
               <button className="tts-btn" aria-label="تشغيل صوتي" onClick={()=>speakText(m.content)}><Volume2 size={14} /></button>
             )}
-            {m.role==="user"&&<span className="av user"><User size={16} /></span>}
           </div>
         ))}
         {loading&&(
           <div className="msg-row assistant">
-            <span className="av bot"><CircleDot size={16} color="#4ade80" /></span>
             <div className="bubble assistant typing-bub"><span className="d"/><span className="d"/><span className="d"/></div>
           </div>
         )}
@@ -821,10 +818,20 @@ textarea:focus, input:focus { outline: none; }
 .page-wrap { 
   flex: 1; 
   overflow-y: auto; 
+  overflow-x: hidden;
   padding: 24px; 
   max-width: 1400px; 
   margin: 0 auto; 
   width: 100%;
+}
+
+@media (max-width: 1024px) { 
+  .page-wrap { 
+    overflow: hidden; 
+    display: flex; 
+    flex-direction: column;
+  } 
+  .page-wrap::-webkit-scrollbar { display: none; }
 }
 
 /* Mobile Bottom Nav */
@@ -1155,13 +1162,10 @@ textarea:focus, input:focus { outline: none; }
 }
 @media (min-width: 768px) { .chat-body { padding: 16px 20px; gap: 12px; } }
 
-.msg-row { display: flex; gap: 8px; align-items: flex-start; max-width: 90%; animation: msg-in 0.3s ease-out; }
+.msg-row { display: flex; gap: 0; align-items: flex-start; max-width: 90%; animation: msg-in 0.3s ease-out; }
 @keyframes msg-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .msg-row.user { align-self: flex-end; flex-direction: row-reverse; max-width: 100%; }
 .msg-row.assistant { align-self: flex-start; }
-
-.av { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-@media (min-width: 768px) { .av { width: 36px; height: 36px; border-radius: 12px; font-size: 18px; } }
 
 .bubble { 
   padding: 10px 14px; 
@@ -1181,7 +1185,7 @@ textarea:focus, input:focus { outline: none; }
   background: var(--tennis-green); 
   color: #020617; 
 }
-@media (max-width: 1024px) { .chat-wrap { height: calc(100vh - 160px); } }
+@media (max-width: 1024px) { .chat-wrap { height: calc(100vh - 140px); overflow: hidden; } }
 
 .chat-hdr { 
   padding: 20px 24px; 
