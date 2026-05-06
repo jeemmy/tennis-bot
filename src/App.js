@@ -122,10 +122,10 @@ export default function App() {
 /* ═══════════════════════════ HOME ═══════════════════════════ */
 function Home({ setTab }) {
   const features = [
-    { icon:"🤖", title:"AI المساعد", desc:"تحدث مع بوت التنس الذكي" },
-    { icon:"🎯", title:"نصائح احترافية", desc:"تحسن مستواك وتقنياتك" },
-    { icon:"📊", title:"الإحصائيات", desc:"تابع تقدمك وإنجازاتك" },
-    { icon:"📖", title:"القاموس", desc:"تعلم مصطلحات التنس" },
+    { icon:"🤖", title:"AI الذكي", desc:"تحدث مع البوت" },
+    { icon:"🎯", title:"نصائح احترافية", desc:"تحسّن مستواك" },
+    { icon:"📊", title:"الإحصائيات", desc:"تتبع تقدمك" },
+    { icon:"📖", title:"القاموس", desc:"تعلم المصطلحات" },
   ];
   
   const cards = [
@@ -133,6 +133,12 @@ function Home({ setTab }) {
     { icon:"❓", title:"اختبار", desc:"اختبر معرفتك", tab:"quiz" },
     { icon:"📖", title:"القاموس", desc:"مصطلحات التنس", tab:"dict" },
     { icon:"📊", title:"الإحصائيات", desc:"تتبع progress", tab:"stats" },
+  ];
+
+  const stats = [
+    { num: "5M+", label: "متعلم نشط" },
+    { num: "98%", label: "رضا المستخدمين" },
+    { num: "24/7", label: "دعم فوري" },
   ];
   
   return (
@@ -144,11 +150,20 @@ function Home({ setTab }) {
       </div>
       
       <h1 className="home-title">تنس <span>بوت</span> 🎾</h1>
-      <p className="home-sub">مساعدك الذكي المتخصص في التنس</p>
+      <p className="home-sub">مساعدك الذكي المتخصص في التنس - اسأل، تعلم، وتفوق</p>
       
       <button className="home-cta" onClick={()=>setTab("chat")}>
-        🚀 ابدأ الآن
+        🚀 ابدأ المحادثة الآن
       </button>
+
+      <div className="home-stats">
+        {stats.map((s, i) => (
+          <div key={i} className="stat-box">
+            <div className="stat-number">{s.num}</div>
+            <div className="stat-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
       
       <div className="home-features">
         {features.map((f, i) => (
@@ -180,10 +195,128 @@ function Chat({ addQuestion }) {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const lastSentRef = useRef(""); //آخر نص تم إرساله لمنع التكرار
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
+  const recognitionRef = useRef(null);
+  const sendTimeoutRef = useRef(null);
+  const lastSentRef = useRef("");
   const endRef = useRef(null);
 
   useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[msgs,loading]);
+
+  // بدء التعرف على الصوت
+  const startVoiceRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('المتصفح لا يدعم التعرف على الصوت');
+      return;
+    }
+
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch(e) {}
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ar-SA';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    let finalTranscript = "";
+    
+    recognition.onresult = (event) => {
+      const result = event.results[event.results.length - 1];
+      const transcript = result[0].transcript.trim();
+      
+      setInput(transcript);
+
+      if (result.isFinal && transcript.length > 0) {
+        if (transcript !== lastSentRef.current && transcript.length >= 2) {
+          finalTranscript = transcript;
+          sendTimeoutRef.current = setTimeout(() => {
+            handleVoiceSend(finalTranscript);
+          }, 1000);
+        }
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      if (event.error !== 'aborted' && voiceMode) {
+        setTimeout(() => {
+          if (voiceMode && !isRecording) startVoiceRecognition();
+        }, 1000);
+      }
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      if (voiceMode) {
+        setTimeout(() => {
+          if (voiceMode && !isRecording) startVoiceRecognition();
+        }, 500);
+      } else {
+        setIsRecording(false);
+      }
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  };
+
+  // إيقاف التعرف على الصوت
+  const stopVoiceRecognition = () => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch(e) {}
+      recognitionRef.current = null;
+    }
+    if (sendTimeoutRef.current) {
+      clearTimeout(sendTimeoutRef.current);
+    }
+    setIsRecording(false);
+  };
+
+  // إيقاف كامل للمحادثة الصوتية
+  const stopVoiceCompletely = () => {
+    stopVoiceRecognition();
+    lastSentRef.current = "";
+    setInput("");
+  };
+
+  // تحويل النص للحديث (Text-to-Speech)
+  const speakText = (text) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    
+    const clean = (text || '').replace(/<[^>]+>/g, '');
+    const utter = new SpeechSynthesisUtterance(clean);
+    const hasArabic = /[\u0600-\u06FF]/.test(clean);
+    utter.lang = hasArabic ? 'ar-SA' : 'en-US';
+    utter.rate = 1;
+    utter.pitch = 1;
+    
+    window.speechSynthesis.speak(utter);
+  };
+  
+  // إيقاف النطق
+  const stopSpeaking = () => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  };
+
+  // تفعيل/إلغاء وضع المحادثة الصوتية
+  const toggleVoiceMode = () => {
+    if (voiceMode) {
+      stopVoiceCompletely();
+      stopSpeaking();
+      setVoiceMode(false);
+    } else {
+      setVoiceMode(true);
+      startVoiceRecognition();
+    }
+  };
 
   // دالة إرسال مع إعادة المحاولة التلقائية
   const sendWithRetry = async (text, retryCount = 0, maxRetries = 3) => {
@@ -215,17 +348,19 @@ function Chat({ addQuestion }) {
       const d = await res.json();
       
       if (!res.ok) {
-        // إذا كانت هناك محاولة إعادة محاولات متبقية
         if (retryCount < maxRetries) {
           console.log(`Retry ${retryCount + 1}/${maxRetries}...`);
           setTimeout(() => sendWithRetry(text, retryCount + 1, maxRetries), 1000);
           return;
         }
-        // إخفاء رسالة الخطأ من المستخدم
         setMsgs([...next, { role: "assistant", content: "🔄 جاري إعادة المحاولة..." }]);
       } else {
         const reply = d.choices?.[0]?.message?.content || "حدث خطأ في استلام الرد.";
         setMsgs([...next, { role: "assistant", content: reply }]);
+        
+        if (voiceMode) {
+          setTimeout(() => speakText(reply), 500);
+        }
       }
 
     } catch (error) {
@@ -238,6 +373,11 @@ function Chat({ addQuestion }) {
     } finally { 
       setLoading(false); 
     }
+  };
+
+  // إرسال الصوت للمادثة
+  const handleVoiceSend = async (text) => {
+    await sendWithRetry(text, 0, 3);
   };
 
   // إرسال نص عادي (مع إعادة المحاولة)
@@ -254,17 +394,20 @@ function Chat({ addQuestion }) {
           <div className="chat-hdr-av">🎾</div>
           <div className="chat-hdr-info">
             <div className="chat-hdr-title">تنس بوت - المساعد الذكي</div>
-            <div className="chat-hdr-sub">متخصص في التنس فقط</div>
+            <div className="chat-hdr-sub">{voiceMode ? "🎤 محادثة صوتية حية" : "متخصص في التنس فقط"}</div>
           </div>
         </div>
         <span className="online-dot"/>
       </div>
 
-      <div className="chat-body">
+      <div className={`chat-body ${voiceMode ? 'with-voice' : ''}`}>
         {msgs.map((m,i)=>(
           <div key={i} className={`msg-row ${m.role}`}>
             {m.role==="assistant"&&<span className="av bot">🎾</span>}
             <div className={`bubble ${m.role}`} dangerouslySetInnerHTML={{__html:fmt(m.content)}}/>
+            {m.role==="assistant"&&(
+              <button className="tts-btn" aria-label="تشغيل صوتي" onClick={()=>speakText(m.content)}>🔊</button>
+            )}
             {m.role==="user"&&<span className="av user">👤</span>}
           </div>
         ))}
@@ -287,12 +430,19 @@ function Chat({ addQuestion }) {
       )}
 
       <div className="input-bar">
+        <button 
+          className={`voice-toggle ${voiceMode ? 'active' : ''}`}
+          onClick={toggleVoiceMode}
+        >
+          {voiceMode ? "⏹️ إيقاف المحادثة الصوتية" : "🎤 محادثة صوتية"}
+        </button>
+        
         <div className="input-row">
           <textarea 
             className="ta" 
             value={input} 
             disabled={loading}
-            placeholder="اسألني عن التنس..."
+            placeholder={voiceMode ? "جاري الاستماع..." : "اسألني عن التنس..."}
             onChange={e=>setInput(e.target.value)}
             onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} }}
           />
@@ -302,7 +452,7 @@ function Chat({ addQuestion }) {
         </div>
       </div>
       <div className="input-hint">
-        Enter للإرسال · Shift+Enter للسطر الجديد
+        {voiceMode ? "تحدث وانتظر الإجابة الآلية" : "Enter للإرسال · Shift+Enter للسطر الجديد"}
       </div>
     </div>
   );
@@ -478,39 +628,55 @@ textarea:focus, input:focus { outline: none; }
 @media (max-width: 768px) { .sidebar { display: none; } .bottom-nav { display: flex; } .page-wrap { padding: 12px 16px 80px; } }
 
 /* ═════════════════ HOME PAGE ═════════════════ */
-.home-section { text-align: center; padding: 100px 24px 120px; position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(79,172,254,0.08) 0%, transparent 50%); }
-.home-section::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(79,172,254,0.15) 0%, rgba(79,172,254,0.05) 40%, transparent 70%); filter: blur(80px); animation: pulse-glow 4s ease-in-out infinite; }
-@keyframes pulse-glow { 0%,100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.1); } }
-.home-logo-box { position: relative; z-index: 2; margin-bottom: 32px; }
-.home-logo { width: 180px; height: 180px; margin: 0 auto; background: linear-gradient(145deg, rgba(79,172,254,0.25) 0%, rgba(79,172,254,0.1) 100%); border: 2px solid rgba(79,172,254,0.3); border-radius: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 30px 60px rgba(79,172,254,0.2), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 100px rgba(79,172,254,0.15); animation: bounce-float 4s ease-in-out infinite; position: relative; }
-@keyframes bounce-float { 0%,100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-10px) rotate(3deg); } 75% { transform: translateY(-5px) rotate(-2deg); } }
-.home-logo img { width: 80%; height: 80%; object-fit: contain; filter: drop-shadow(0 6px 16px rgba(79,172,254,0.3)); }
-.home-title { color: #fff; font-size: 52px; font-weight: 900; margin-bottom: 16px; position: relative; z-index: 2; letter-spacing: -1px; line-height: 1.2; }
-.home-title span { background: linear-gradient(135deg, #0ea5e9 0%, #4ade80 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.home-sub { color: rgba(255,255,255,0.65); font-size: 20px; margin-bottom: 40px; position: relative; z-index: 2; line-height: 1.8; font-weight: 300; max-width: 500px; margin-left: auto; margin-right: auto; }
-.home-cta { background: linear-gradient(135deg, #0ea5e9 0%, #0288d1 50%, #4ade80 100%); color: #000; border: none; border-radius: 28px; padding: 20px 56px; font-size: 18px; font-weight: 700; box-shadow: 0 20px 50px rgba(79,172,254,0.4), 0 0 0 0 rgba(79,172,254,0.5); position: relative; z-index: 2; display: inline-block; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); overflow: hidden; }
-.home-cta::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent); transform: translateX(-100%); transition: transform 0.6s; }
-.home-cta:hover { transform: translateY(-6px) scale(1.05); box-shadow: 0 30px 60px rgba(79,172,254,0.5), 0 0 0 8px rgba(79,172,254,0.2); }
-.home-cta:hover::before { transform: translateX(100%); }
-.home-cta:active { transform: translateY(-2px) scale(1.02); }
-.home-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 80px; position: relative; z-index: 2; }
-.home-feature { background: linear-gradient(145deg, rgba(79,172,254,0.08) 0%, rgba(79,172,254,0.02) 100%); border: 1px solid rgba(79,172,254,0.15); border-radius: 24px; padding: 32px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; overflow: hidden; }
-.home-feature::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(79,172,254,0.2) 0%, transparent 100%); opacity: 0; transition: opacity 0.4s; }
-.home-feature:hover { border-color: rgba(79,172,254,0.4); transform: translateY(-8px) scale(1.03); box-shadow: 0 20px 40px rgba(79,172,254,0.2); }
-.home-feature:hover::before { opacity: 1; }
-.home-feature-icon { font-size: 44px; filter: drop-shadow(0 6px 12px rgba(79,172,254,0.3)); }
-.home-feature-title { color: #fff; font-size: 18px; font-weight: 700; }
-.home-feature-desc { color: rgba(255,255,255,0.5); font-size: 13px; line-height: 1.5; text-align: center; }
+.home-section { text-align: center; padding: 120px 24px 140px; position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(79,172,254,0.12) 0%, transparent 50%, rgba(79,172,254,0.05) 100%); }
+.home-section::before { content: ''; position: absolute; top: -30%; left: 50%; transform: translateX(-50%); width: 800px; height: 800px; background: radial-gradient(circle, rgba(79,172,254,0.2) 0%, rgba(79,172,254,0.08) 35%, transparent 70%); filter: blur(80px); animation: pulse-float 6s ease-in-out infinite; }
+@keyframes pulse-float { 0%,100% { transform: translateX(-50%) translateY(0) scale(1); } 50% { transform: translateX(-50%) translateY(-20px) scale(1.05); } }
 
-.home-cards { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-top: 50px; position: relative; z-index: 2; }
-.home-card { background: linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; }
-.home-card::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 100%; height: 100%; background: radial-gradient(circle at 50% 0%, rgba(79,172,254,0.15) 0%, transparent 60%); opacity: 0; transition: opacity 0.4s; }
-.home-card:hover { border-color: rgba(79,172,254,0.4); transform: translateY(-6px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 30px rgba(79,172,254,0.15); }
+.home-logo-box { position: relative; z-index: 2; margin-bottom: 40px; perspective: 1000px; }
+.home-logo { width: 240px; height: 240px; margin: 0 auto; background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%); border: 3px solid #fff; border-radius: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 40px 80px rgba(0,0,0,0.3), 0 0 0 20px rgba(79,172,254,0.15), inset 0 2px 8px rgba(255,255,255,0.8); animation: hover-lift 5s ease-in-out infinite; position: relative; overflow: hidden; }
+@keyframes hover-lift { 0%,100% { transform: translateY(0) rotateZ(0deg); } 50% { transform: translateY(-15px) rotateZ(3deg); } }
+.home-logo::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(79,172,254,0.1) 0%, transparent 100%); }
+.home-logo img { width: 75%; height: 75%; object-fit: contain; filter: drop-shadow(0 8px 16px rgba(79,172,254,0.4)); position: relative; z-index: 1; }
+
+.home-title { color: #fff; font-size: 56px; font-weight: 900; margin-bottom: 16px; position: relative; z-index: 2; letter-spacing: -1.5px; line-height: 1.2; text-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+.home-title span { background: linear-gradient(135deg, #4ade80 0%, #0ea5e9 50%, #4ade80 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: gradient-shift 8s ease infinite; }
+@keyframes gradient-shift { 0%,100% { filter: hue-rotate(0deg); } 50% { filter: hue-rotate(10deg); } }
+
+.home-sub { color: rgba(255,255,255,0.75); font-size: 22px; margin-bottom: 48px; position: relative; z-index: 2; line-height: 1.8; font-weight: 400; max-width: 600px; margin-left: auto; margin-right: auto; letter-spacing: 0.3px; }
+
+.home-cta { background: linear-gradient(135deg, #0ea5e9 0%, #0288d1 40%, #4ade80 100%); color: #fff; border: none; border-radius: 32px; padding: 22px 60px; font-size: 20px; font-weight: 700; box-shadow: 0 25px 60px rgba(79,172,254,0.45), 0 0 0 0 rgba(79,172,254,0.6); position: relative; z-index: 2; display: inline-block; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); overflow: hidden; cursor: pointer; }
+.home-cta::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transform: translateX(-100%); transition: transform 0.7s; }
+.home-cta::after { content: ''; position: absolute; inset: 0; border-radius: 32px; background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent); }
+.home-cta:hover { transform: translateY(-8px) scale(1.08); box-shadow: 0 35px 80px rgba(79,172,254,0.55), 0 0 0 12px rgba(79,172,254,0.25); letter-spacing: 1px; }
+.home-cta:hover::before { transform: translateX(100%); }
+.home-cta:active { transform: translateY(-3px) scale(1.04); }
+
+.home-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; margin-top: 80px; position: relative; z-index: 2; max-width: 600px; margin-left: auto; margin-right: auto; }
+.stat-box { background: linear-gradient(145deg, rgba(79,172,254,0.15) 0%, rgba(79,172,254,0.05) 100%); border: 1.5px solid rgba(79,172,254,0.2); border-radius: 20px; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; backdrop-filter: blur(10px); transition: all 0.3s; }
+.stat-box:hover { border-color: rgba(79,172,254,0.4); background: linear-gradient(145deg, rgba(79,172,254,0.2) 0%, rgba(79,172,254,0.08) 100%); transform: translateY(-5px); }
+.stat-number { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #4ade80, #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.stat-label { font-size: 13px; color: rgba(255,255,255,0.6); font-weight: 500; text-align: center; }
+
+.home-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 18px; margin-top: 80px; position: relative; z-index: 2; }
+.home-feature { background: linear-gradient(145deg, rgba(79,172,254,0.1) 0%, rgba(79,172,254,0.02) 100%); border: 1px solid rgba(79,172,254,0.15); border-radius: 22px; padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; overflow: hidden; }
+.home-feature::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(79,172,254,0.15) 0%, transparent 100%); opacity: 0; transition: opacity 0.4s; }
+.home-feature:hover { border-color: rgba(79,172,254,0.35); transform: translateY(-10px) scale(1.04); box-shadow: 0 24px 48px rgba(79,172,254,0.2); }
+.home-feature:hover::before { opacity: 1; }
+.home-feature-icon { font-size: 48px; filter: drop-shadow(0 6px 12px rgba(79,172,254,0.3)); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.home-feature:hover .home-feature-icon { transform: scale(1.2) rotateZ(10deg); }
+.home-feature-title { color: #fff; font-size: 16px; font-weight: 700; }
+.home-feature-desc { color: rgba(255,255,255,0.55); font-size: 12px; line-height: 1.5; text-align: center; }
+
+.home-cards { display: grid; grid-template-columns: repeat(2,1fr); gap: 18px; margin-top: 60px; position: relative; z-index: 2; }
+@media (max-width: 768px) { .home-cards { grid-template-columns: 1fr; } }
+.home-card { background: linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%); border: 1.5px solid rgba(79,172,254,0.2); border-radius: 24px; padding: 28px 18px; display: flex; flex-direction: column; align-items: center; gap: 12px; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; overflow: hidden; cursor: pointer; }
+.home-card::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 100%; height: 100%; background: radial-gradient(circle at 50% 0%, rgba(79,172,254,0.2) 0%, transparent 60%); opacity: 0; transition: opacity 0.4s; }
+.home-card:hover { border-color: rgba(79,172,254,0.4); transform: translateY(-8px) scale(1.03); box-shadow: 0 24px 50px rgba(79,172,254,0.25); }
 .home-card:hover::before { opacity: 1; }
-.home-card-icon { font-size: 36px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); transition: transform 0.3s; }
-.home-card:hover .home-card-icon { transform: scale(1.15) rotate(5deg); }
-.home-card-title { color: #fff; font-size: 16px; font-weight: 700; }
-.home-card-desc { color: rgba(255,255,255,0.4); font-size: 12px; }
+.home-card-icon { font-size: 40px; filter: drop-shadow(0 4px 8px rgba(79,172,254,0.2)); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.home-card:hover .home-card-icon { transform: scale(1.25) rotate(8deg) translateY(-5px); }
+.home-card-title { color: #fff; font-size: 17px; font-weight: 700; }
+.home-card-desc { color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 500; }
 
 /* ═════════════════ CHAT PAGE ═════════════════ */
 .chat-wrap { height: 100%; display: flex; flex-direction: column; max-width: 900px; margin: 0 auto; width: 100%; background: linear-gradient(145deg, rgba(79,172,254,0.08) 0%, rgba(79,172,254,0.02) 100%); border-radius: 28px; border: 1px solid rgba(79,172,254,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.3); backdrop-filter: blur(20px); overflow: hidden; }
@@ -549,10 +715,17 @@ textarea:focus, input:focus { outline: none; }
 .ta { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(79,172,254,0.2); border-radius: 14px; padding: 12px 14px; color: #fff; resize: none; font-size: 15px; transition: all 0.3s; max-height: 100px; }
 .ta::placeholder { color: rgba(255,255,255,.35); }
 .ta:focus { background: rgba(255,255,255,0.08); border-color: rgba(79,172,254,0.4); }
-.send-btn { background: linear-gradient(135deg, #0ea5e9, #4ade80); color: #000; border: none; border-radius: 12px; padding: 10px 16px; font-weight: 700; transition: all 0.3s; box-shadow: 0 4px 12px rgba(79,172,254,0.3); }
+.send-btn { background: linear-gradient(135deg, #0ea5e9, #4ade80); color: #fff; border: none; border-radius: 12px; padding: 10px 16px; font-weight: 700; transition: all 0.3s; box-shadow: 0 4px 12px rgba(79,172,254,0.3); }
 .send-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79,172,254,0.4); }
 .send-btn:disabled { background: rgba(79,172,254,0.2); color: rgba(255,255,255,.4); }
 .input-hint { padding: 8px 15px; text-align: center; font-size: 11px; color: rgba(255,255,255,.2); }
+
+.voice-toggle { width: 100%; padding: 12px; background: rgba(79,172,254,0.08); border: 1px solid rgba(79,172,254,0.2); border-radius: 12px; color: rgba(255,255,255,.8); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s; margin-bottom: 10px; }
+.voice-toggle:hover { background: rgba(79,172,254,0.15); border-color: rgba(79,172,254,0.4); }
+.voice-toggle.active { background: linear-gradient(135deg, #ef4444, #dc2626); border-color: transparent; color: #fff; }
+
+.tts-btn { background: rgba(79,172,254,0.1); border: 1px solid rgba(79,172,254,0.2); border-radius: 8px; padding: 6px 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; margin-right: 8px; }
+.tts-btn:hover { background: rgba(79,172,254,0.2); transform: scale(1.1); }
 
 /* ═════════════════ RESPONSIVE ═════════════════ */
 @media (max-width: 640px) {
