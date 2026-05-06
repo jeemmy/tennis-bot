@@ -180,104 +180,12 @@ function Chat({ addQuestion }) {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [voiceMode, setVoiceMode] = useState(false); // وضع المحادثة الصوتية الحية
-  const recognitionRef = useRef(null);
-  const sendTimeoutRef = useRef(null);
-  const lastSentRef = useRef(""); //追踪 آخر نص تم إرساله لمنع التكرار
+  const lastSentRef = useRef(""); //آخر نص تم إرساله لمنع التكرار
   const endRef = useRef(null);
 
   useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[msgs,loading]);
 
-  // بدء التعرف على الصوت
-  const startVoiceRecognition = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('المتصفح لا يدعم التعرف على الصوت');
-      return;
-    }
-
-    // إيقاف أي جلسة سابقة
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch(e) {}
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'ar-SA';
-    recognition.continuous = false; // استخدام غير مستمر لتجنب التكرار
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-
-    let finalTranscript = "";
-    
-    recognition.onresult = (event) => {
-      // الحصول على أحدث نتيجة فقط
-      const result = event.results[event.results.length - 1];
-      const transcript = result[0].transcript.trim();
-      
-      setInput(transcript);
-
-      // إذا كانresult نهائي وليس فارغ
-      if (result.isFinal && transcript.length > 0) {
-        // التأكد من أن النص مختلف عن آخر رسالة مرسلة
-        if (transcript !== lastSentRef.current && transcript.length >= 2) {
-          finalTranscript = transcript;
-          
-          // إرسال تلقائي بعد التوقف بـ 1 ثانية
-          sendTimeoutRef.current = setTimeout(() => {
-            handleVoiceSend(finalTranscript);
-          }, 1000);
-        }
-      }
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      // إعادة المحاولة تلقائياً في حالة الخطأ
-      if (event.error !== 'aborted' && voiceMode) {
-        setTimeout(() => {
-          if (voiceMode && !isRecording) startVoiceRecognition();
-        }, 1000);
-      }
-      setIsRecording(false);
-    };
-
-    recognition.onend = () => {
-      // إعادة التشغيل تلقائياً إذا كنا في وضع المحادثة الصوتية
-      if (voiceMode) {
-        setTimeout(() => {
-          if (voiceMode && !isRecording) startVoiceRecognition();
-        }, 500);
-      } else {
-        setIsRecording(false);
-      }
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsRecording(true);
-  };
-
-  // إيقاف التعرف على الصوت
-  const stopVoiceRecognition = () => {
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch(e) {}
-      recognitionRef.current = null;
-    }
-    if (sendTimeoutRef.current) {
-      clearTimeout(sendTimeoutRef.current);
-    }
-    setIsRecording(false);
-  };
-
-  // إيقاف كامل للمحادثة الصوتية
-  const stopVoiceCompletely = () => {
-    stopVoiceRecognition();
-    lastSentRef.current = ""; // إعادة تعيين لمنع التكرار
-    setInput("");
-  };
-
-// دالة إرسال مع إعادة المحاولة التلقائية
+  // دالة إرسال مع إعادة المحاولة التلقائية
   const sendWithRetry = async (text, retryCount = 0, maxRetries = 3) => {
     const t = text.trim();
     if (!t || loading) return;
@@ -318,10 +226,6 @@ function Chat({ addQuestion }) {
       } else {
         const reply = d.choices?.[0]?.message?.content || "حدث خطأ في استلام الرد.";
         setMsgs([...next, { role: "assistant", content: reply }]);
-        
-        if (voiceMode) {
-          setTimeout(() => speakText(reply), 500);
-        }
       }
 
     } catch (error) {
@@ -333,35 +237,6 @@ function Chat({ addQuestion }) {
       setMsgs([...next, { role: "assistant", content: "🔄 حدث خطأ. حاول مجدداً." }]);
     } finally { 
       setLoading(false); 
-    }
-  };
-
-  // إرسال الصوت للمادثة ( يستخدم sendWithRetry )
-  const handleVoiceSend = async (text) => {
-    await sendWithRetry(text, 0, 3);
-  };
-
-  // تحويل النص للحديث (Text-to-Speech)
-  const speakText = (text) => {
-    if (!window.speechSynthesis) return;
-    // إيقاف أي صوت正在进行
-    window.speechSynthesis.cancel();
-    
-    const clean = (text || '').replace(/<[^>]+>/g, '');
-    const utter = new SpeechSynthesisUtterance(clean);
-    const hasArabic = /[\u0600-\u06FF]/.test(clean);
-    utter.lang = hasArabic ? 'ar-SA' : 'en-US';
-    utter.rate = 1;
-    utter.pitch = 1;
-    
-    // تشغيل الصوت
-    window.speechSynthesis.speak(utter);
-  };
-  
-  // إيقاف النطق عند إيقاف المحادثة الصوتية
-  const stopSpeaking = () => {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
     }
   };
 
@@ -379,20 +254,17 @@ function Chat({ addQuestion }) {
           <div className="chat-hdr-av">🎾</div>
           <div className="chat-hdr-info">
             <div className="chat-hdr-title">تنس بوت - المساعد الذكي</div>
-            <div className="chat-hdr-sub">{voiceMode ? "🎤 محادثة صوتية حية" : "متخصص في التنس فقط"}</div>
+            <div className="chat-hdr-sub">متخصص في التنس فقط</div>
           </div>
         </div>
         <span className="online-dot"/>
       </div>
 
-      <div className={`chat-body ${voiceMode ? 'with-voice-controls' : ''}`}>
+      <div className="chat-body">
         {msgs.map((m,i)=>(
           <div key={i} className={`msg-row ${m.role}`}>
             {m.role==="assistant"&&<span className="av bot">🎾</span>}
             <div className={`bubble ${m.role}`} dangerouslySetInnerHTML={{__html:fmt(m.content)}}/>
-            {m.role==="assistant"&&(
-              <button className="tts-btn" aria-label="تشغيل صوتي" onClick={()=>speakText(m.content)}>🔊</button>
-            )}
             {m.role==="user"&&<span className="av user">👤</span>}
           </div>
         ))}
@@ -420,7 +292,7 @@ function Chat({ addQuestion }) {
             className="ta" 
             value={input} 
             disabled={loading}
-            placeholder={voiceMode ? "تحدث الآن..." : "اسألني عن التنس..."}
+            placeholder="اسألني عن التنس..."
             onChange={e=>setInput(e.target.value)}
             onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} }}
           />
@@ -430,7 +302,7 @@ function Chat({ addQuestion }) {
         </div>
       </div>
       <div className="input-hint">
-        {voiceMode ? "تحدث وانتظر الإجابة الآلية" : "Enter للإرسال · Shift+Enter للسطر الجديد"}
+        Enter للإرسال · Shift+Enter للسطر الجديد
       </div>
     </div>
   );
