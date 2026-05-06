@@ -31,23 +31,38 @@
     padding: 0;
   }
   
-  /* Fixed Header */
+  /* Fixed Header - smaller height */
   .chat-hdr {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 100;
-    background: rgba(6, 13, 26, 0.95);
+    background: rgba(6, 13, 26, 0.98);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding: 12px 16px;
+    padding: 8px 12px; /* Reduced padding */
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    min-height: 50px;
   }
   
-  /* Chat Wrap - Full Height with Fixed Header/Input */
+  .chat-hdr-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .chat-hdr-sub {
+    font-size: 10px;
+    opacity: 0.7;
+  }
+  
+  .chat-hdr-av {
+    font-size: 20px;
+  }
+  
+  /* Chat Wrap */
   .chat-wrap {
     display: flex;
     flex-direction: column;
@@ -57,31 +72,101 @@
     border-radius: 0;
   }
   
-  /* Scrollable Messages Area */
+  /* Scrollable Messages Area - more padding to avoid header/input overlap */
   .chat-body {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 70px 12px 80px 12px; /* Top padding for fixed header, bottom for input */
+    padding: 58px 10px 145px 10px; /* Top: header height, Bottom: input + bottom nav */
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
   
-  /* Fixed Input Bar */
+  /* Fixed Input Bar with Voice Button inside */
   .input-bar {
     position: fixed;
     bottom: 60px; /* Above bottom nav */
     left: 0;
     right: 0;
     z-index: 99;
-    background: rgba(6, 13, 26, 0.95);
+    background: rgba(6, 13, 26, 0.98);
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255,255,255,0.1);
-    padding: 10px 12px;
+    padding: 8px 10px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  
+  /* Voice Mode Button - inline in input bar */
+  .voice-mode-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  
+  .voice-mode-btn.active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    font-size: 10px;
+  }
+  
+  /* Voice Indicator - full width above input */
+  .voice-controls {
+    display: none; /* Hide separate voice controls, use inline instead */
+  }
+  
+  .voice-indicator {
+    width: 100%;
+    padding: 6px;
+    background: rgba(16, 185, 129, 0.2);
+    border-radius: 6px;
+    color: #10b981;
+    font-size: 11px;
+    text-align: center;
+    margin-bottom: 4px;
+    order: -1; /* Show above input */
+  }
+  
+  /* Input field */
+  .ta {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 10px;
+    font-size: 13px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+  }
+  
+  .ta::placeholder {
+    color: rgba(255,255,255,0.5);
+  }
+  
+  .send-btn {
+    padding: 10px 14px;
+    border-radius: 20px;
+    background: #10b981;
+    flex-shrink: 0;
+  }
+  
+  .mic-btn {
+    padding: 8px 10px;
+    border-radius: 20px;
+    background: rgba(16, 185, 129, 0.3);
+    flex-shrink: 0;
+  }
+  
+  .input-hint {
+    display: none;
   }
   
   /* Fixed Bottom Navigation */
@@ -106,10 +191,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 8px;
+    gap: 2px;
+    padding: 6px;
     color: rgba(255,255,255,0.6);
-    font-size: 10px;
+    font-size: 9px;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -120,49 +205,11 @@
   }
   
   .bottom-icon {
-    font-size: 20px;
+    font-size: 18px;
   }
   
   .bottom-label {
-    font-size: 10px;
-  }
-  
-  /* Voice Controls */
-  .voice-controls {
-    position: fixed;
-    top: 60px;
-    left: 0;
-    right: 0;
-    z-index: 99;
-    background: rgba(6, 13, 26, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 8px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
-  
-  .chat-body.with-voice-controls {
-    padding-top: 110px;
-  }
-  
-  /* Input adjustments */
-  .ta {
-    flex: 1;
-    padding: 10px 12px;
-    font-size: 14px;
-  }
-  
-  .send-btn {
-    padding: 10px 14px;
-  }
-  
-  .voice-indicator {
-    width: 100%;
-    margin: 0 0 6px 0;
-    padding: 6px;
-  }
-  
-  .input-hint {
-    display: none;
+    font-size: 9px;
   }
   
   /* Message bubbles */
@@ -170,9 +217,38 @@
     max-width: 85%;
   }
   
+  .msg-row.user {
+    align-self: flex-end;
+  }
+  
+  .msg-row.assistant {
+    align-self: flex-start;
+  }
+  
   .bubble {
-    padding: 10px 14px;
-    font-size: 14px;
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 16px;
+  }
+  
+  /* TTS button next to messages */
+  .tts-btn {
+    background: rgba(16, 185, 129, 0.3);
+    border: none;
+    border-radius: 50%;
+    padding: 4px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-right: 4px;
+  }
+  
+  .typing-bub {
+    padding: 10px 16px;
+  }
+  
+  .typing-bub .d {
+    width: 6px;
+    height: 6px;
   }
 }
 
@@ -207,47 +283,27 @@
   .bottom-nav {
     display: none;
   }
+  
+  .voice-mode-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .voice-mode-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
+  .voice-mode-btn.active { background: linear-gradient(135deg, #ef4444, #dc2626); animation: pulse 1.5s infinite; }
 }
 
-/* ===== Voice Chat Styles ===== */
-.voice-mode-btn {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  border: none;
-  border-radius: 25px;
-  padding: 10px 20px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.voice-mode-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
-.voice-mode-btn.active { background: linear-gradient(135deg, #ef4444, #dc2626); animation: pulse 1.5s infinite; }
-
+/* ===== Common Voice Styles ===== */
 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
-.voice-indicator {
-  padding: 8px 12px;
-  background: rgba(16, 185, 129, 0.2);
-  border-radius: 8px;
-  color: #10b981;
-  font-size: 12px;
-  text-align: center;
-}
-
-.mic-btn {
-  background: rgba(16, 185, 129, 0.3);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 12px;
-  cursor: pointer;
-}
-
-.mic-btn:hover { background: rgba(16, 185, 129, 0.5); }
 .mic-btn.recording { background: #ef4444; animation: mic-pulse 1s infinite; }
-
 @keyframes mic-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 .online-dot.recording { background: #ef4444; animation: blink 1s infinite; }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }

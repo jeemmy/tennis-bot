@@ -431,22 +431,21 @@ function Chat({ addQuestion }) {
         </div>
       )}
 
-      <div className="voice-controls">
-        <button 
-          className={`voice-mode-btn ${voiceMode ? 'active' : ''}`}
-          onClick={toggleVoiceMode}
-          title={voiceMode ? "إيقاف المحادثة الصوتية" : "بدء محادثة صوتية حية"}
-        >
-          {voiceMode ? "⏹️ إيقاف" : "🎤 محادثة صوتية"}
-        </button>
-      </div>
-
       <div className="input-bar">
         {voiceMode && (
           <div className="voice-indicator">
             {isRecording ? "🎤 جاري الاستماع..." : "⏳ بانتظار发言..."}
           </div>
         )}
+        
+        <button 
+          className={`voice-mode-btn ${voiceMode ? 'active' : ''}`}
+          onClick={toggleVoiceMode}
+          title={voiceMode ? "إيقاف المحادثة الصوتية" : "بدء محادثة صوتية حية"}
+        >
+          {voiceMode ? "⏹️" : "🎤"}
+        </button>
+        
         <input 
           className="ta" 
           value={input} 
@@ -455,6 +454,7 @@ function Chat({ addQuestion }) {
           onChange={e=>setInput(e.target.value)}
           onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} }}
         />
+        
         {!voiceMode && (
           <button 
             className={`mic-btn ${isRecording ? 'recording' : ''}`}
@@ -464,6 +464,7 @@ function Chat({ addQuestion }) {
             {isRecording ? "⏹️" : "🎤"}
           </button>
         )}
+        
         <button className="send-btn" disabled={loading||!input.trim()} onClick={()=>send()}>➤</button>
       </div>
       <div className="input-hint">
