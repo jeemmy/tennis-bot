@@ -60,7 +60,18 @@ const NAV = [
 /* ═══════════════════════════ ROOT ═══════════════════════════ */
 export default function App() {
   const [tab, setTab]   = useState("home");
-  const [stats, setStats] = useState({ questions: 0, quizDone: 0, quizScore: 0 });
+  
+  // Load stats from localStorage on mount
+  const [stats, setStats] = useState(() => {
+    const saved = localStorage.getItem('tennisStats');
+    return saved ? JSON.parse(saved) : { questions: 0, quizDone: 0, quizScore: 0 };
+  });
+  
+  // Save stats to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('tennisStats', JSON.stringify(stats));
+  }, [stats]);
+  
   const addQ  = ()      => setStats(s => ({ ...s, questions: s.questions + 1 }));
   const addQz = score   => setStats(s => ({ ...s, quizDone: s.quizDone + 1, quizScore: Math.max(s.quizScore, score) }));
 
