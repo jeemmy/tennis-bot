@@ -333,13 +333,25 @@ function Chat({ addQuestion }) {
   // تحويل النص للحديث (Text-to-Speech)
   const speakText = (text) => {
     if (!window.speechSynthesis) return;
+    // إيقاف أي صوت正在进行
+    window.speechSynthesis.cancel();
+    
     const clean = (text || '').replace(/<[^>]+>/g, '');
     const utter = new SpeechSynthesisUtterance(clean);
     const hasArabic = /[\u0600-\u06FF]/.test(clean);
     utter.lang = hasArabic ? 'ar-SA' : 'en-US';
     utter.rate = 1;
-    window.speechSynthesis.cancel();
+    utter.pitch = 1;
+    
+    // تشغيل الصوت
     window.speechSynthesis.speak(utter);
+  };
+  
+  // إيقاف النطق
+  const stopSpeaking = () => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
   };
 
   // إرسال نص عادي (مع إعادة المحاولة)
@@ -403,40 +415,40 @@ function Chat({ addQuestion }) {
       )}
 
       <div className="input-bar">
-        {voiceMode && (
-          <div className="voice-indicator">
-            {isRecording ? "🎤 جاري الاستماع..." : "⏳ بانتظار发言..."}
-          </div>
-        )}
-        
         <button 
           className={`voice-mode-btn ${voiceMode ? 'active' : ''}`}
           onClick={toggleVoiceMode}
-          title={voiceMode ? "إيقاف المحادثة الصوتية" : "بدء محادثة صوتية حية"}
         >
-          {voiceMode ? "⏹️" : "🎤"}
+          {voiceMode ? "⏹️ إيقاف المحادثة الصوتية" : "🎤 محادثة صوتية"}
         </button>
         
-        <input 
-          className="ta" 
-          value={input} 
-          disabled={loading}
-          placeholder={voiceMode ? "تحدث الآن..." : "اسألني عن التنس..."}
-          onChange={e=>setInput(e.target.value)}
-          onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} }}
-        />
-        
-        {!voiceMode && (
-          <button 
-            className={`mic-btn ${isRecording ? 'recording' : ''}`}
-            onClick={isRecording ? stopVoiceRecognition : startVoiceRecognition}
-            title={isRecording ? "إيقاف التسجيل" : "بدء التسجيل الصوتي"}
-          >
-            {isRecording ? "⏹️" : "🎤"}
-          </button>
+        {voiceMode && (
+          <div className="voice-indicator">
+            {isRecording ? "🎤 جاري الاستماع... (تحدث الآن)" : "⏳ بانتظار发言ك..."}
+          </div>
         )}
         
-        <button className="send-btn" disabled={loading||!input.trim()} onClick={()=>send()}>➤</button>
+        <div className="input-row">
+          <input 
+            className="ta" 
+            value={input} 
+            disabled={loading}
+            placeholder={voiceMode ? "تحدث الآن..." : "اسألني عن التنس..."}
+            onChange={e=>setInput(e.target.value)}
+            onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} }}
+          />
+          
+          {!voiceMode && (
+            <button 
+              className={`mic-btn ${isRecording ? 'recording' : ''}`}
+              onClick={isRecording ? stopVoiceRecognition : startVoiceRecognition}
+            >
+              {isRecording ? "⏹️" : "🎤"}
+            </button>
+          )}
+          
+          <button className="send-btn" disabled={loading||!input.trim()} onClick={()=>send()}>➤</button>
+        </div>
       </div>
       <div className="input-hint">
         {voiceMode ? "تحدث وانتظر الإجابة الآلية - اضغط 'إيقاف' للخروج" : "Enter للإرسال · Shift+Enter سطر جديد"}
