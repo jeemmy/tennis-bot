@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import './App.css';
 import Logo from './logo.png';
-import { Home as HomeIcon, MessageSquare, ClipboardCheck, BookOpen, BarChart3, Play, Send, Mic, MicOff, Volume2, ArrowRight, User } from 'lucide-react';
-import { CircleDot } from 'lucide-react';
 
 /* ═══════════════════════════ DATA ═══════════════════════════ */
 
@@ -47,16 +45,18 @@ const DICTIONARY = [
 
 const SUGGESTIONS = [
   "ما هي قواعد التنس الأساسية؟",
+  "من هو أفضل لاعب في التاريخ؟",
   "ما الفرق بين أنواع الملاعب؟",
   "كيف أحسّن ضربة السيرف؟",
+  "ما هي بطولات الغراند سلام؟",
 ];
 
 const NAV = [
-  { id: "home", icon: HomeIcon, label: "الرئيسية" },
-  { id: "chat", icon: MessageSquare, label: "المدرب" },
-  { id: "quiz", icon: ClipboardCheck, label: "اختبار" },
-  { id: "dict", icon: BookOpen, label: "القاموس" },
-  { id: "stats", icon: BarChart3, label: "إحصائيات" },
+  { id: "home",  icon: "🏠", label: "الرئيسية" },
+  { id: "chat",  icon: "🤖", label: "المساعد" },
+  { id: "quiz",  icon: "❓", label: "اختبار" },
+  { id: "dict",  icon: "📖", label: "القاموس" },
+  { id: "stats", icon: "📊", label: "إحصائيات" },
 ];
 
 /* ═══════════════════════════ ROOT ═══════════════════════════ */
@@ -81,19 +81,21 @@ export default function App() {
     <div className="root">
       <aside className="sidebar">
         <div className="side-logo">
-          <div className="side-logo-icon"><CircleDot size={26} color="#4ade80" /></div>
+          <div className="side-logo-icon">🎾</div>
           <div className="side-logo-text">تنس بوت</div>
         </div>
         <nav className="side-nav">
-          {NAV.map(n => {
-            const Icon = n.icon;
-            return (
-              <button key={n.id} className={`nav-btn ${tab===n.id?"active":""}`} onClick={()=>setTab(n.id)}>
-                <Icon size={20} /><span>{n.label}</span>
-              </button>
-            );
-          })}
+          {NAV.map(n => (
+            <button key={n.id} className={`nav-btn ${tab===n.id?"active":""}`} onClick={()=>setTab(n.id)}>
+              <span className="nav-icon">{n.icon}</span><span>{n.label}</span>
+            </button>
+          ))}
         </nav>
+        <div className="side-stats">
+          <div className="side-stats-label">المستوى الحالي</div>
+          <div className="side-stats-value">متوسط (4.0)</div>
+          <div className="side-stats-bar"><div className="side-stats-fill"></div></div>
+        </div>
         <div className="side-footer">Tennis Bot · v1.0 · 2026</div>
       </aside>
 
@@ -107,15 +109,12 @@ export default function App() {
         </div>
 
         <nav className="bottom-nav">
-          {NAV.map(n => {
-            const Icon = n.icon;
-            return (
-              <button key={n.id} className={`bottom-btn ${tab===n.id?"active":""}`} onClick={()=>setTab(n.id)}>
-                <Icon size={22} />
-                <span className="bottom-label">{n.label}</span>
-              </button>
-            );
-          })}
+          {NAV.map(n => (
+            <button key={n.id} className={`bottom-btn ${tab===n.id?"active":""}`} onClick={()=>setTab(n.id)}>
+              <span className="bottom-icon">{n.icon}</span>
+              <span className="bottom-label">{n.label}</span>
+            </button>
+          ))}
         </nav>
       </main>
 
@@ -127,10 +126,10 @@ export default function App() {
 /* ═══════════════════════════ HOME ═══════════════════════════ */
 function Home({ setTab }) {
   const quickLinks = [
-    { icon: MessageSquare, label: "المدرب الذكي", desc: "اسأل عن الخطط، التمارين، والتحضير للمباريات.", tab: "chat" },
-    { icon: ClipboardCheck, label: "الاختبارات", desc: "اختبر القواعد، التكتيك، وذكاءك داخل الملعب.", tab: "quiz" },
-    { icon: BookOpen, label: "المفردات", desc: "تعلم مصطلحات التنس بأمثلة واضحة.", tab: "dict" },
-    { icon: BarChart3, label: "الإحصائيات", desc: "تابع تطورك عبر جلسات التدريب.", tab: "stats" },
+    { icon: "💬", label: "المدرب الذكي", desc: "اسأل عن الخطط، التمارين، والتحضير للمباريات.", tab: "chat" },
+    { icon: "🛡️", label: "الاختبارات", desc: "اختبر القواعد، التكتيك، وذكاءك داخل الملعب.", tab: "quiz" },
+    { icon: "📚", label: "المفردات", desc: "تعلم مصطلحات التنس بأمثلة واضحة.", tab: "dict" },
+    { icon: "📈", label: "الإحصائيات", desc: "تابع تطورك عبر جلسات التدريب.", tab: "stats" },
   ];
 
   return (
@@ -138,7 +137,6 @@ function Home({ setTab }) {
       <div className="hero-bg">
         <div className="hero-overlay" />
         <div className="hero-gradient" />
-        <div className="hero-glow-main" />
         <div className="hero-orbit">
           <div className="hero-orbit-dot" />
         </div>
@@ -151,16 +149,16 @@ function Home({ setTab }) {
         </div>
 
         <h1 className="hero-title">
-         <span>تنـس بــوت!</span>
+          تدرب بذكاء في كل نقطة مع <span>مدرب تنس ذكي بتجربة فاخرة.</span>
         </h1>
 
         <p className="hero-subtitle">
-          تنس بوت هو مساعد مدعوم بالذكاء الاصطناعي يجمع بين المدرب، الاختبارات، مفردات التنس، وأي شئ آخر يخص التنس في مكان واحد. ابدأ بالدردشة الان!.
+          تنس بوت يجمع المدرب، الاختبارات، مفردات التنس، وإحصائيات الأداء في مركز واحد داكن ومركز يناسب أجواء الملاعب.
         </p>
 
         <div className="hero-btns">
           <button className="hero-cta" onClick={() => setTab("chat")}>
-            <Play size={18} fill="currentColor" /> ابدأ مع المدرب
+            ▶ ابدأ مع المدرب
           </button>
           <button className="hero-cta-sec" onClick={() => setTab("stats")}>
             عرض الإحصائيات
@@ -168,21 +166,18 @@ function Home({ setTab }) {
         </div>
 
         <div className="quick-links">
-          {quickLinks.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <button key={item.tab} className="quick-link" onClick={() => setTab(item.tab)}>
-                <div className="quick-link-icon-row">
-                  <Icon size={20} className="quick-link-icon" />
-                  <ArrowRight size={16} className="quick-link-arrow" />
-                </div>
-                <div>
-                  <h3 className="quick-link-title">{item.label}</h3>
-                  <p className="quick-link-desc">{item.desc}</p>
-                </div>
-              </button>
-            );
-          })}
+          {quickLinks.map((item, index) => (
+            <button key={item.tab} className="quick-link" onClick={() => setTab(item.tab)}>
+              <div className="quick-link-icon-row">
+                <span className="quick-link-icon">{item.icon}</span>
+                <span className="quick-link-arrow">←</span>
+              </div>
+              <div>
+                <h3 className="quick-link-title">{item.label}</h3>
+                <p className="quick-link-desc">{item.desc}</p>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     </div>
@@ -392,10 +387,10 @@ function Chat({ addQuestion }) {
     <div className="chat-wrap">
       <div className="chat-hdr">
         <div className="chat-hdr-left">
-          <div className="chat-hdr-av"><CircleDot size={22} color="#4ade80" /></div>
+          <div className="chat-hdr-av">🎾</div>
           <div className="chat-hdr-info">
             <div className="chat-hdr-title">تنس بوت - المساعد الذكي</div>
-            <div className="chat-hdr-sub">{voiceMode ? <><Mic size={12} /> محادثة صوتية حية</> : "متخصص في التنس فقط"}</div>
+            <div className="chat-hdr-sub">{voiceMode ? "🎤 محادثة صوتية حية" : "متخصص في التنس فقط"}</div>
           </div>
         </div>
         <span className="online-dot"/>
@@ -404,17 +399,17 @@ function Chat({ addQuestion }) {
       <div className={`chat-body ${voiceMode ? 'with-voice' : ''}`}>
         {msgs.map((m,i)=>(
           <div key={i} className={`msg-row ${m.role}`}>
-            {m.role==="assistant"&&<span className="av bot"><CircleDot size={16} color="#4ade80" /></span>}
+            {m.role==="assistant"&&<span className="av bot">🎾</span>}
             <div className={`bubble ${m.role}`} dangerouslySetInnerHTML={{__html:fmt(m.content)}}/>
             {m.role==="assistant"&&(
-              <button className="tts-btn" aria-label="تشغيل صوتي" onClick={()=>speakText(m.content)}><Volume2 size={14} /></button>
+              <button className="tts-btn" aria-label="تشغيل صوتي" onClick={()=>speakText(m.content)}>🔊</button>
             )}
-            {m.role==="user"&&<span className="av user"><User size={16} /></span>}
+            {m.role==="user"&&<span className="av user">👤</span>}
           </div>
         ))}
         {loading&&(
           <div className="msg-row assistant">
-            <span className="av bot"><CircleDot size={16} color="#4ade80" /></span>
+            <span className="av bot">🎾</span>
             <div className="bubble assistant typing-bub"><span className="d"/><span className="d"/><span className="d"/></div>
           </div>
         )}
@@ -435,7 +430,7 @@ function Chat({ addQuestion }) {
           className={`voice-toggle ${voiceMode ? 'active' : ''}`}
           onClick={toggleVoiceMode}
         >
-          {voiceMode ? <><MicOff size={14} /> إيقاف المحادثة الصوتية</> : <><Mic size={14} /> محادثة صوتية</>}
+          {voiceMode ? "⏹️ إيقاف المحادثة الصوتية" : "🎤 محادثة صوتية"}
         </button>
         
         <div className="input-row">
@@ -448,9 +443,12 @@ function Chat({ addQuestion }) {
             onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} }}
           />
           <button className="send-btn" disabled={loading||!input.trim()} onClick={()=>send()}>
-            {loading ? <span className="animate-pulse">...</span> : <Send size={16} />}
+            {loading ? "⏳" : "➤"}
           </button>
         </div>
+      </div>
+      <div className="input-hint">
+        {voiceMode ? "تحدث وانتظر الإجابة الآلية" : "Enter للإرسال · Shift+Enter للسطر الجديد"}
       </div>
     </div>
   );
@@ -613,10 +611,9 @@ button:hover:not(:disabled) { opacity: .9; }
 button:disabled { cursor: not-allowed; opacity: 0.5; }
 textarea, input { font-family: 'Cairo', 'Outfit', sans-serif; }
 textarea:focus, input:focus { outline: none; }
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(220,252,45,0.2); border-radius: 3px; }
 
 ::selection { background: rgba(220,252,45,0.32); color: var(--text-light); }
 
@@ -654,8 +651,8 @@ textarea:focus, input:focus { outline: none; }
 .sidebar { 
   width: 260px; 
   flex-shrink: 0; 
-  background: transparent; 
-  border-left: 1px solid var(--border-white); 
+  background: #0f172a; 
+  border-right: 1px solid var(--border-white); 
   display: flex; 
   flex-direction: column; 
   padding: 24px 0; 
@@ -663,111 +660,31 @@ textarea:focus, input:focus { outline: none; }
   top: 0; 
   height: 100vh; 
   overflow-y: auto;
-  overflow-x: hidden;
   z-index: 50;
 }
 
-.sidebar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(180deg, rgba(2,4,10,0.3) 0%, rgba(2,6,23,0.5) 100%);
-  pointer-events: none;
-}
-
 .side-logo { 
   display: flex; 
   align-items: center; 
-  justify-content: center;
   gap: 12px; 
   padding: 0 20px 24px; 
   border-bottom: 1px solid var(--border-white); 
   margin-bottom: 20px; 
-  position: relative;
 }
 
 .side-logo-icon {
-  width: 48px; 
-  height: 48px; 
-  background: #ffffff; 
-  border-radius: 14px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-.side-logo-text { 
-  font-size: 22px; 
-  font-weight: 900; 
-  color: var(--text-light); 
-  text-align: center;
-}
-
-.side-nav { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 0 12px; }
-.nav-btn { 
-  display: flex; 
-  align-items: center; 
-  gap: 12px; 
-  padding: 14px 16px; 
-  border-radius: 14px; 
-  border: none; 
-  background: transparent; 
-  color: var(--text-slate); 
-  font-size: 15px; 
-  font-weight: 600; 
-  width: 100%; 
-  text-align: right;
-  transition: all 0.2s;
-}
-.nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-light); }
-.nav-btn.active { 
+  width: 44px; 
+  height: 44px; 
   background: var(--tennis-green); 
-  color: #020617; 
-  font-weight: 700;
-  box-shadow: 0 0 25px rgba(220,252,45,0.35);
-}
-.nav-icon { font-size: 20px; }
-
-.side-footer { 
-  padding: 16px; 
-  text-align: center; 
-  color: rgba(255,255,255,0.25); 
-  font-size: 11px; 
-  border-top: 1px solid var(--border-white); 
-}
-
-.side-logo { 
+  border-radius: 12px; 
   display: flex; 
   align-items: center; 
   justify-content: center;
-  gap: 12px; 
-  padding: 0 20px 24px; 
-  border-bottom: 1px solid var(--border-white); 
-  margin-bottom: 20px; 
+  font-size: 24px;
+  box-shadow: 0 0 20px rgba(220,252,45,0.4);
 }
 
-.side-logo-icon {
-  width: 48px; 
-  height: 48px; 
-  background: #ffffff; 
-  border-radius: 14px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center;
-  font-size: 26px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-.side-logo-text { 
-  font-size: 22px; 
-  font-weight: 900; 
-  color: var(--text-light); 
-  text-align: center;
-}
+.side-logo-text { font-size: 20px; font-weight: 900; color: var(--text-light); }
 
 .side-nav { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 0 12px; }
 .nav-btn { 
@@ -894,48 +811,35 @@ textarea:focus, input:focus { outline: none; }
   bottom: 0;
   left: 0;
   right: 0;
-  height: 180px;
+  height: 220px;
   background: linear-gradient(to top, var(--bg-dark), transparent);
 }
-
-/* Glow effect */
-.hero-glow-main {
-  position: absolute;
-  right: -30px;
-  bottom: 30px;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
-  border-radius: 50%;
-  filter: blur(40px);
-  display: block;
-}
-@media (min-width: 768px) { .hero-glow-main { width: 300px; height: 300px; right: 0; } }
 
 /* Animated Orbit */
 .hero-orbit {
   position: absolute;
-  left: -100px;
-  top: 60px;
-  width: 320px;
-  height: 320px;
+  left: -200px;
+  top: 80px;
+  width: 520px;
+  height: 520px;
   border: 1px solid rgba(220,252,45,0.2);
   border-radius: 50%;
-  animation: orbit-rotate 20s linear infinite;
-  display: block;
+  animation: orbit-rotate 26s linear infinite;
+  display: none;
 }
+@media (min-width: 1024px) { .hero-orbit { display: block; } }
 @keyframes orbit-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 .hero-orbit-dot {
   position: absolute;
   left: 50%;
-  top: -8px;
+  top: -10px;
   transform: translateX(-50%);
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   background: var(--tennis-green);
   border-radius: 50%;
-  box-shadow: 0 0 30px rgba(220,252,45,0.8);
+  box-shadow: 0 0 42px rgba(220,252,45,0.9);
 }
 
 .hero-glow {
@@ -956,73 +860,54 @@ textarea:focus, input:focus { outline: none; }
 .hero-content {
   position: relative;
   z-index: 10;
-  padding: 40px 16px;
+  padding: 80px 16px;
   max-width: 900px;
 }
 
 .home-logo {
   width: 140px;
   height: 140px;
-  margin-bottom: 20px;
-  background: #ffffff;
+  margin-bottom: 32px;
+  background: var(--tennis-green);
   border-radius: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 
-    0 0 50px rgba(255,255,255,0.2),
-    0 10px 25px rgba(0,0,0,0.3);
+  box-shadow: 0 0 55px rgba(220,252,45,0.35);
   animation: float 4s ease-in-out infinite;
 }
-@media (max-width: 380px) {
-  .home-logo { width: 110px; height: 110px; border-radius: 26px; margin-bottom: 16px; }
-}
-@media (min-width: 768px) {
-  .home-logo { width: 180px; height: 180px; border-radius: 40px; margin-bottom: 24px; box-shadow: 0 0 70px rgba(255,255,255,0.25), 0 18px 40px rgba(0,0,0,0.35); }
-}
-
-@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-.home-logo img { width: 80%; height: 80%; object-fit: contain; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.home-logo img { width: 75%; height: 75%; object-fit: contain; }
 
 .hero-title {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 900;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
+  line-height: 0.95;
+  letter-spacing: -0.06em;
   color: var(--text-light);
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
-@media (max-width: 380px) { .hero-title { font-size: 26px; } }
-@media (min-width: 480px) { .hero-title { font-size: 38px; } }
-@media (min-width: 768px) { .hero-title { font-size: 42px; margin-bottom: 18px; } }
-@media (min-width: 1024px) { .hero-title { font-size: 56px; } }
+@media (min-width: 768px) { .hero-title { font-size: 56px; } }
+@media (min-width: 1024px) { .hero-title { font-size: 72px; } }
 
 .hero-title span {
   background: linear-gradient(90deg, #fff 0%, var(--tennis-green) 36%, #fff 68%, #94a3b8 100%);
   background-size: 220% 100%;
   -webkit-background-clip: text;
   background-clip: text;
-  -webkit-text-fill-color: transparent;
   color: transparent;
   animation: shimmer 5s ease-in-out infinite;
 }
-@supports not (background-clip: text) {
-  .hero-title span {
-    color: var(--tennis-green);
-    -webkit-text-fill-color: var(--tennis-green);
-  }
-}
+@keyframes shimmer { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 
 .hero-subtitle {
   font-size: 16px;
-  line-height: 1.7;
-  color: #94a3b8;
-  max-width: 100%;
-  margin-bottom: 24px;
+  line-height: 1.8;
+  color: #cbd5e1;
+  max-width: 560px;
+  margin-bottom: 32px;
 }
-@media (max-width: 380px) { .hero-subtitle { font-size: 14px; } }
-@media (min-width: 480px) { .hero-subtitle { font-size: 17px; } }
-@media (min-width: 768px) { .hero-subtitle { font-size: 18px; margin-bottom: 32px; max-width: 560px; } }
+@media (min-width: 768px) { .hero-subtitle { font-size: 18px; } }
 
 .hero-btns { display: flex; flex-direction: column; gap: 12px; }
 @media (min-width: 640px) { .hero-btns { flex-direction: row; } }
@@ -1070,46 +955,41 @@ textarea:focus, input:focus { outline: none; }
 /* Quick Links Grid */
 .quick-links {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-top: 30px;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 60px;
 }
-@media (min-width: 640px) { .quick-links { gap: 14px; margin-top: 40px; } }
-@media (min-width: 1280px) { .quick-links { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
+@media (min-width: 640px) { .quick-links { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1280px) { .quick-links { grid-template-columns: repeat(4, 1fr); } }
 
 .quick-link {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 110px;
-  padding: 14px;
+  min-height: 180px;
+  padding: 24px;
   background: rgba(255,255,255,0.035);
   border: 1px solid var(--border-white);
-  border-radius: 16px;
+  border-radius: 32px;
   backdrop-filter: blur(20px);
   transition: all 0.3s;
   text-decoration: none;
   color: inherit;
 }
-@media (min-width: 768px) { 
-  .quick-link { min-height: 150px; padding: 20px; border-radius: 24px; }
-}
 .quick-link:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   border-color: rgba(220,252,45,0.4);
   background: rgba(220,252,45,0.055);
-  box-shadow: 0 16px 50px rgba(0,0,0,0.35);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
 }
 
 .quick-link-icon-row { display: flex; justify-content: space-between; align-items: center; }
-.quick-link-icon { font-size: 18px; color: var(--tennis-green); }
-.quick-link-arrow { font-size: 14px; color: var(--text-slate); transition: transform 0.3s; }
-.quick-link:hover .quick-link-arrow { transform: translateX(-3px); color: var(--tennis-green); }
+.quick-link-icon { font-size: 24px; color: var(--tennis-green); }
+.quick-link-arrow { font-size: 18px; color: var(--text-slate); transition: transform 0.3s; }
+.quick-link:hover .quick-link-arrow { transform: translateX(-4px); color: var(--tennis-green); }
 
-.quick-link-title { font-size: 13px; font-weight: 800; margin-bottom: 6px; }
-@media (min-width: 768px) { .quick-link-title { font-size: 16px; margin-bottom: 8px; } }
-.quick-link-desc { font-size: 10px; line-height: 1.5; color: var(--text-slate); }
-@media (min-width: 768px) { .quick-link-desc { font-size: 12px; } }
+.quick-link-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+.quick-link-desc { font-size: 13px; line-height: 1.6; color: var(--text-slate); }
 
 /* Sections */
 .section { padding: 24px; }
@@ -1118,68 +998,15 @@ textarea:focus, input:focus { outline: none; }
 
 /* ===================== CHAT PAGE ===================== */
 .chat-wrap { 
-  height: calc(100vh - 110px); 
+  height: calc(100vh - 96px); 
   display: flex; 
   flex-direction: column; 
   max-width: 900px; 
   margin: 0 auto; 
   background: rgba(2,6,23,0.7); 
-  border-radius: 14px; 
+  border-radius: 24px; 
   border: 1px solid var(--border-white); 
   overflow: hidden;
-}
-@media (min-width: 768px) { .chat-wrap { height: calc(100vh - 96px); border-radius: 20px; } }
-
-.chat-hdr { 
-  padding: 10px 12px; 
-  border-bottom: 1px solid var(--border-white); 
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-  background: rgba(220,252,45,0.05);
-}
-
-.chat-hdr-left { display: flex; align-items: center; gap: 8px; }
-.chat-hdr-av { font-size: 20px; }
-.chat-hdr-title { font-size: 12px; font-weight: 700; color: var(--text-light); font-family: 'Cairo', sans-serif; }
-.chat-hdr-sub { font-size: 10px; color: var(--text-slate); font-family: 'Cairo', sans-serif; }
-.online-dot { width: 6px; height: 6px; background: var(--tennis-green); border-radius: 50%; margin-right: auto; animation: pulse 2s infinite; }
-
-.chat-body { 
-  flex: 1; 
-  overflow-y: auto; 
-  padding: 10px 12px; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 8px; 
-}
-@media (min-width: 768px) { .chat-body { padding: 16px 20px; gap: 12px; } }
-
-.msg-row { display: flex; gap: 8px; align-items: flex-start; max-width: 90%; animation: msg-in 0.3s ease-out; }
-@keyframes msg-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.msg-row.user { align-self: flex-end; flex-direction: row-reverse; max-width: 100%; }
-.msg-row.assistant { align-self: flex-start; }
-
-.av { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-@media (min-width: 768px) { .av { width: 36px; height: 36px; border-radius: 12px; font-size: 18px; } }
-
-.bubble { 
-  padding: 10px 14px; 
-  border-radius: 14px; 
-  line-height: 1.6; 
-  font-size: 13px; 
-  word-wrap: break-word; 
-  font-family: 'Cairo', sans-serif;
-}
-@media (min-width: 768px) { .bubble { padding: 14px 18px; border-radius: 18px; font-size: 15px; line-height: 1.7; } }
-.bubble.assistant { 
-  background: rgba(255,255,255,0.05); 
-  border: 1px solid var(--border-white); 
-  color: var(--text-light); 
-}
-.bubble.user { 
-  background: var(--tennis-green); 
-  color: #020617; 
 }
 @media (max-width: 1024px) { .chat-wrap { height: calc(100vh - 160px); } }
 
@@ -1214,11 +1041,7 @@ textarea:focus, input:focus { outline: none; }
 .msg-row.assistant { align-self: flex-start; }
 
 .av { width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-.av.bot { 
-  background: #ffffff; 
-  color: #020617;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
+.av.bot { background: var(--tennis-green); color: #020617; }
 .av.user { background: rgba(255,255,255,0.1); }
 
 .bubble { 
@@ -1245,67 +1068,60 @@ textarea:focus, input:focus { outline: none; }
 .d:nth-child(3) { animation-delay: .4s; }
 @keyframes typing { 0%, 60%, 100% { opacity: .3; } 30% { opacity: 1; } }
 
-.suggest-wrap { padding: 12px 16px; background: transparent; border-top: 1px solid var(--border-white); }
-.suggest-lbl { font-size: 11px; color: var(--text-slate); margin-bottom: 8px; font-weight: 600; font-family: 'Cairo', sans-serif; }
-.suggest-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.suggest-wrap { padding: 18px 24px; background: transparent; border-top: 1px solid var(--border-white); }
+.suggest-lbl { font-size: 12px; color: var(--text-slate); margin-bottom: 10px; font-weight: 600; font-family: 'Cairo', sans-serif; }
+.suggest-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .sug-btn { 
   background: rgba(220,252,45,0.08); 
   color: var(--text-light); 
   border: 1px solid rgba(220,252,45,0.2); 
-  border-radius: 16px; 
-  padding: 6px 10px; 
-  font-size: 11px; 
+  border-radius: 20px; 
+  padding: 8px 14px; 
+  font-size: 13px; 
   font-family: 'Cairo', sans-serif;
   transition: all 0.3s; 
 }
-@media (min-width: 768px) { 
-  .sug-btn { padding: 8px 14px; font-size: 13px; border-radius: 20px; }
-  .suggest-wrap { padding: 18px 24px; }
-}
+.sug-btn:hover { background: rgba(220,252,45,0.15); border-color: rgba(220,252,45,0.4); transform: translateY(-2px); }
 
 .input-bar { 
-  padding: 8px 12px; 
+  padding: 18px 24px; 
   display: flex; 
-  flex-direction: column;
-  gap: 6px;
+  gap: 10px; 
   background: rgba(15,23,42,0.5); 
   border-top: 1px solid var(--border-white); 
 }
-@media (min-width: 768px) { .input-bar { padding: 12px 16px; gap: 8px; flex-direction: row; } }
 
 .voice-toggle { 
   width: 100%; 
-  padding: 8px; 
+  padding: 12px; 
   background: rgba(220,252,45,0.08); 
   border: 1px solid rgba(220,252,45,0.2); 
-  border-radius: 8px; 
+  border-radius: 12px; 
   color: var(--text-light); 
-  font-size: 11px; 
+  font-size: 13px; 
   font-weight: 600; 
   cursor: pointer; 
   transition: all 0.3s; 
+  margin-bottom: 10px; 
   font-family: 'Cairo', sans-serif;
 }
-@media (min-width: 768px) { .voice-toggle { padding: 10px; font-size: 12px; border-radius: 10px; margin-bottom: 0; width: auto; } }
 .voice-toggle:hover { background: rgba(220,252,45,0.15); border-color: rgba(220,252,45,0.4); }
 .voice-toggle.active { background: linear-gradient(135deg, #ef4444, #dc2626); border-color: transparent; color: #fff; }
 
-.input-row { display: flex; gap: 6px; }
+.input-row { display: flex; gap: 10px; }
 
 .ta { 
   flex: 1; 
   background: rgba(255,255,255,0.05); 
   border: 1px solid var(--border-white); 
-  border-radius: 8px; 
-  padding: 8px 10px; 
+  border-radius: 14px; 
+  padding: 14px 16px; 
   color: #fff; 
   resize: none; 
-  font-size: 12px; 
+  font-size: 15px; 
   font-family: 'Cairo', sans-serif;
-  max-height: 50px;
-  min-height: 38px;
+  max-height: 100px;
 }
-@media (min-width: 768px) { .ta { padding: 10px 12px; font-size: 14px; max-height: 60px; min-height: 44px; border-radius: 10px; } }
 .ta::placeholder { color: var(--text-slate); }
 .ta:focus { background: rgba(255,255,255,0.08); border-color: rgba(220,252,45,0.4); }
 
@@ -1313,18 +1129,21 @@ textarea:focus, input:focus { outline: none; }
   background: var(--tennis-green); 
   color: #020617; 
   border: none; 
-  border-radius: 8px; 
-  padding: 8px 12px; 
+  border-radius: 14px; 
+  padding: 14px 20px; 
   font-weight: 700; 
   transition: all 0.3s; 
-  font-size: 14px;
+  font-size: 18px;
 }
-@media (min-width: 768px) { .send-btn { padding: 10px 14px; font-size: 16px; border-radius: 10px; } }
-.send-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(220,252,45,0.4); }
+.send-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(220,252,45,0.4); }
 .send-btn:disabled { background: rgba(220,252,45,0.2); color: rgba(255,255,255,0.4); }
 
 .input-hint { 
-  display: none;
+  padding: 8px 15px; 
+  text-align: center; 
+  font-size: 11px; 
+  color: rgba(255,255,255,0.2); 
+  font-family: 'Cairo', sans-serif; 
 }
 
 .tts-btn { 
