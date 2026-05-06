@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import './App.css';
 import Logo from './logo.png';
-import { Home as HomeIcon, MessageSquare, ClipboardCheck, BookOpen, BarChart3, Play, Send, Mic, MicOff, Volume2, ArrowRight } from 'lucide-react';
+import { Home as HomeIcon, MessageSquare, ClipboardCheck, BookOpen, BarChart3, Play, Send, Mic, MicOff, Volume2, ArrowRight, MessageCircle, FileText, Trophy, BookMarked, HelpCircle, Focus } from 'lucide-react';
 import { CircleDot } from 'lucide-react';
 
 /* ═══════════════════════════ DATA ═══════════════════════════ */
@@ -535,10 +535,14 @@ function Dict() {
     d.term.toLowerCase().includes(q.toLowerCase())||d.ar.includes(q)||d.def.includes(q)
   );
   return(
-    <div className="section">
-      <h2 className="sec-title">📖 قاموس مصطلحات التنس</h2>
-      <p className="sec-sub">{DICTIONARY.length} مصطلح مع شرح عربي وإنجليزي</p>
-      <input className="search" value={q} onChange={e=>setQ(e.target.value)} placeholder="🔍 ابحث عن مصطلح..."/>
+    <div className="section dict-section">
+      <div className="dict-header">
+        <h2 className="sec-title">قاموس مصطلحات التنس</h2>
+        <p className="sec-sub">{DICTIONARY.length} مصطلح مع شرح عربي وإنجليزي</p>
+      </div>
+      <div className="dict-search-wrap">
+        <input className="search" value={q} onChange={e=>setQ(e.target.value)} placeholder="ابحث عن مصطلح..."/>
+      </div>
       <div className="dict-grid">
         {list.map((d,i)=>(
           <div key={i} className="dict-card">
@@ -546,7 +550,7 @@ function Dict() {
             <p className="dict-def">{d.def}</p>
           </div>
         ))}
-        {!list.length&&<div className="no-res">لا توجد نتائج 🔍</div>}
+        {!list.length&&<div className="no-res">لا توجد نتائج</div>}
       </div>
     </div>
   );
@@ -555,32 +559,37 @@ function Dict() {
 /* ═══════════════════════════ STATS ═══════════════════════════ */
 function Stats({ stats }) {
   const cards=[
-    {icon:"💬",label:"الأسئلة المطروحة",  value:stats.questions,   col:"#16a34a"},
-    {icon:"📝",label:"مرات الاختبار",      value:stats.quizDone,    col:"#ca8a04"},
-    {icon:"🏆",label:"أعلى نتيجة",         value:stats.quizScore+"%",col:"#7c3aed"},
-    {icon:"📖",label:"مصطلحات القاموس",    value:DICTIONARY.length, col:"#0284c7"},
-    {icon:"❓",label:"أسئلة الاختبار",     value:QUIZ_QUESTIONS.length,col:"#dc2626"},
-    {icon:"🎾",label:"مجال التخصص",        value:"التنس فقط",       col:"#059669"},
+    {icon:MessageCircle,label:"الأسئلة المطروحة",  value:stats.questions,   col:"#16a34a"},
+    {icon:FileText,label:"مرات الاختبار",      value:stats.quizDone,    col:"#ca8a04"},
+    {icon:Trophy,label:"أعلى نتيجة",         value:stats.quizScore+"%",col:"#7c3aed"},
+    {icon:BookMarked,label:"مصطلحات القاموس",    value:DICTIONARY.length, col:"#0284c7"},
+    {icon:HelpCircle,label:"أسئلة الاختبار",     value:QUIZ_QUESTIONS.length,col:"#dc2626"},
+    {icon:Focus,label:"مجال التخصص",        value:"التنس فقط",       col:"#059669"},
   ];
   return(
-    <div className="section">
-      <h2 className="sec-title">📊 الإحصائيات</h2>
-      <p className="sec-sub">تتبّع نشاطك داخل التطبيق</p>
-      <div className="stats-grid">
-        {cards.map((c,i)=>(
-          <div key={i} className="stat-card" style={{"--col":c.col}}>
-            <div className="stat-icon">{c.icon}</div>
-            <div className="stat-val">{c.value}</div>
-            <div className="stat-lbl">{c.label}</div>
-          </div>
-        ))}
+    <div className="section stats-section">
+      <div className="stats-header">
+        <h2 className="sec-title">الإحصائيات</h2>
+        <p className="sec-sub">تتبّع نشاطك داخل التطبيق</p>
+      </div>
+<div className="stats-grid">
+        {cards.map((c,i) => {
+          const Icon = c.icon;
+          return (
+            <div key={i} className="stat-card" style={{"--col":c.col}}>
+              <div className="stat-icon"><Icon size={24} color={c.col} /></div>
+              <div className="stat-val">{c.value}</div>
+              <div className="stat-lbl">{c.label}</div>
+            </div>
+          );
+        })}
       </div>
       <div className="info-box">
-        <h3 className="info-title">ℹ️ عن التطبيق</h3>
+        <h3 className="info-title">عن التطبيق</h3>
         <div className="info-grid">
-          {[["🤖 النموذج","Gemini 2.0 Flash (OpenRouter)"],["🌐 التقنية","React.js + API"],
-            ["🎯 الهدف","مساعد متخصص بالتنس فقط"],["🌍 اللغات","العربية والإنجليزية"],
-            ["📅 السنة","2026"],["🎓 النوع","مشروع تخرج"]].map(([k,v])=>(
+          {[["النموذج","Gemini 2.0 Flash (OpenRouter)"],["التقنية","React.js + API"],
+            ["الهدف","مساعد متخصص بالتنس فقط"],["اللغات","العربية والإنجليزية"],
+            ["السنة","2026"],["النوع","مشروع تخرج"]].map(([k,v])=>(
             <div key={k} className="info-row"><span className="info-k">{k}</span><span className="info-v">{v}</span></div>
           ))}
         </div>
@@ -1063,6 +1072,7 @@ textarea:focus, input:focus { outline: none; }
   color: #94a3b8;
   max-width: 100%;
   margin-bottom: 24px;
+  font-family: 'Cairo', sans-serif;
 }
 @media (max-width: 380px) { .hero-subtitle { font-size: 14px; } }
 @media (min-width: 480px) { .hero-subtitle { font-size: 17px; } }
@@ -1156,8 +1166,32 @@ textarea:focus, input:focus { outline: none; }
 @media (min-width: 768px) { .quick-link-desc { font-size: 12px; } }
 
 /* Sections */
-.sec-title { color: #fff; font-size: 22px; font-weight: 900; margin-bottom: 4px; }
-.sec-sub { color: rgba(255,255,255,.4); font-size: 13px; margin-bottom: 20px; }
+.sec-title { color: #fff; font-size: 22px; font-weight: 900; margin-bottom: 4px; font-family: 'Cairo', sans-serif; }
+.sec-sub { color: rgba(255,255,255,.4); font-size: 13px; margin-bottom: 20px; font-family: 'Cairo', sans-serif; }
+
+.stats-section .stats-header, .dict-section .dict-header {
+  position: sticky;
+  top: 0;
+  background: var(--bg-dark);
+  padding: 16px 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--border-white);
+  margin-bottom: 16px;
+}
+@media (min-width: 768px) {
+  .stats-section .stats-header, .dict-section .dict-header { position: static; border: none; padding: 0; margin-bottom: 20px; }
+}
+
+.dict-search-wrap {
+  position: sticky;
+  top: 80px;
+  background: var(--bg-dark);
+  padding: 12px 0;
+  z-index: 10;
+}
+@media (min-width: 768px) {
+  .dict-search-wrap { position: static; padding: 0; }
+}
 
 /* ===================== CHAT PAGE ===================== */
 .chat-wrap { 
