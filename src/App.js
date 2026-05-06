@@ -613,35 +613,32 @@ textarea:focus, input:focus { outline: none; }
 @media (max-width: 768px) { .sidebar { display: none; } .bottom-nav { display: flex; } .page-wrap { padding: 12px 16px 80px; } }
 
 /* ═════════════════ HOME PAGE ═════════════════ */
-.home-section { text-align: center; padding: 80px 24px 100px; position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(79,172,254,0.12) 0%, transparent 50%, rgba(79,172,254,0.05) 100%); }
-@media (min-width: 1024px) { .home-section { padding: 120px 24px 160px; } }
+.home-section { text-align: center; padding: 40px 20px 80px; position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(79,172,254,0.12) 0%, transparent 50%, rgba(79,172,254,0.05) 100%); }
+@media (min-width: 768px) { .home-section { padding: 60px 24px 120px; } }
 .home-section::before { content: ''; position: absolute; top: -30%; left: 50%; transform: translateX(-50%); width: 800px; height: 800px; background: radial-gradient(circle, rgba(79,172,254,0.2) 0%, rgba(79,172,254,0.08) 35%, transparent 70%); filter: blur(80px); animation: pulse-float 6s ease-in-out infinite; }
 @keyframes pulse-float { 0%,100% { transform: translateX(-50%) translateY(0) scale(1); } 50% { transform: translateX(-50%) translateY(-20px) scale(1.05); } }
 
-.home-logo-box { position: relative; z-index: 2; margin-bottom: 60px; perspective: 1000px; }
-.home-logo { width: 200px; height: 200px; margin: 0 auto; background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%); border: 4px solid #fff; border-radius: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 50px 100px rgba(0,0,0,0.4), 0 0 0 25px rgba(79,172,254,0.2), inset 0 3px 10px rgba(255,255,255,0.9); animation: hover-lift 5s ease-in-out infinite; position: relative; overflow: hidden; }
-@media (min-width: 768px) {
-  .home-logo { width: 320px; height: 320px; border-radius: 70px; }
-}
-@media (min-width: 1024px) {
-  .home-logo { width: 500px; height: 500px; border-radius: 100px; }
-}
-@media (min-width: 1440px) {
-  .home-logo { width: 600px; height: 600px; border-radius: 120px; }
-}
+.home-logo-box { position: relative; z-index: 2; margin-bottom: 30px; }
+.home-logo { width: 120px; height: 120px; margin: 0 auto; background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%); border: 3px solid #fff; border-radius: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 15px 40px rgba(0,0,0,0.3), 0 0 20px rgba(79,172,254,0.2); animation: hover-lift 4s ease-in-out infinite; position: relative; }
+@media (min-width: 480px) { .home-logo { width: 150px; height: 150px; border-radius: 30px; } }
+@media (min-width: 768px) { .home-logo { width: 200px; height: 200px; border-radius: 40px; } }
+@media (min-width: 1024px) { .home-logo { width: 250px; height: 250px; border-radius: 50px; } }
+.home-logo img { width: 75%; height: 75%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(79,172,254,0.3)); }
 @keyframes hover-lift { 0%,100% { transform: translateY(0) rotateZ(0deg); } 50% { transform: translateY(-15px) rotateZ(3deg); } }
 .home-logo::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(79,172,254,0.1) 0%, transparent 100%); }
 .home-logo img { width: 75%; height: 75%; object-fit: contain; filter: drop-shadow(0 8px 16px rgba(79,172,254,0.4)); position: relative; z-index: 1; }
 
-.home-title { color: #fff; font-size: 36px; font-weight: 900; margin-bottom: 16px; position: relative; z-index: 2; letter-spacing: -1.5px; line-height: 1.2; text-shadow: 0 4px 20px rgba(0,0,0,0.4); font-family: 'Cairo', sans-serif; }
+.home-title { color: #fff; font-size: 32px; font-weight: 900; margin-bottom: 12px; position: relative; z-index: 2; letter-spacing: -0.5px; font-family: 'Cairo', sans-serif; }
+@media (min-width: 480px) { .home-title { font-size: 38px; } }
 @media (min-width: 768px) { .home-title { font-size: 48px; } }
-@media (min-width: 1024px) { .home-title { font-size: 72px; } }
-@media (min-width: 1440px) { .home-title { font-size: 84px; } }
+@media (min-width: 1024px) { .home-title { font-size: 56px; } }
 .home-title span { background: linear-gradient(135deg, #4ade80 0%, #0ea5e9 50%, #4ade80 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: gradient-shift 8s ease infinite; }
 
-.home-sub { color: rgba(255,255,255,0.75); font-size: 22px; margin-bottom: 48px; position: relative; z-index: 2; line-height: 1.9; font-weight: 500; max-width: 600px; margin-left: auto; margin-right: auto; letter-spacing: 0.5px; font-family: 'Cairo', sans-serif; }
+.home-sub { color: rgba(255,255,255,0.75); font-size: 16px; margin-bottom: 30px; position: relative; z-index: 2; line-height: 1.7; font-weight: 500; }
+@media (min-width: 768px) { .home-sub { font-size: 20px; margin-bottom: 40px; } }
 
-.home-cta { background: linear-gradient(135deg, #0ea5e9 0%, #0288d1 40%, #4ade80 100%); color: #fff; border: none; border-radius: 32px; padding: 22px 60px; font-size: 20px; font-weight: 700; box-shadow: 0 25px 60px rgba(79,172,254,0.45), 0 0 0 0 rgba(79,172,254,0.6); position: relative; z-index: 2; display: inline-block; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); overflow: hidden; cursor: pointer; }
+.home-cta { background: linear-gradient(135deg, #0ea5e9 0%, #0288d1 40%, #4ade80 100%); color: #fff; border: none; border-radius: 28px; padding: 16px 40px; font-size: 16px; font-weight: 700; box-shadow: 0 20px 40px rgba(79,172,254,0.4); position: relative; z-index: 2; display: inline-block; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; }
+@media (min-width: 768px) { .home-cta { padding: 20px 50px; font-size: 18px; border-radius: 32px; } }
 .home-cta::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transform: translateX(-100%); transition: transform 0.7s; }
 .home-cta::after { content: ''; position: absolute; inset: 0; border-radius: 32px; background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent); }
 .home-cta:hover { transform: translateY(-8px) scale(1.08); box-shadow: 0 35px 80px rgba(79,172,254,0.55), 0 0 0 12px rgba(79,172,254,0.25); letter-spacing: 1px; }
