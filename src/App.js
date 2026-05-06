@@ -827,9 +827,21 @@ textarea:focus, input:focus { outline: none; }
 
 @media (max-width: 1024px) {
   .sidebar { display: none; } 
-  .bottom-nav { display: flex; } 
+  .bottom-nav { 
+    display: flex; 
+    padding: 8px 4px; 
+    gap: 2px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-slate);
+    border-top: 1px solid var(--border-white);
+    z-index: 100;
+    height: 65px;
+  } 
   .page-wrap { 
-    padding: 16px 16px 100px;
+    padding: 16px 16px 75px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1462,11 +1474,25 @@ textarea:focus, input:focus { outline: none; }
 .no-res { text-align: center; padding: 40px; color: var(--text-slate); font-size: 16px; }
 
 /* ===================== STATS PAGE ===================== */
-.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
 @media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; } }
 
+.stat-card { 
+  background: rgba(255,255,255,0.03); 
+  border: 1px solid var(--border-white); 
+  border-radius: 16px; 
+  padding: 16px; 
+  text-align: center;
+  transition: all 0.3s;
+}
+.stat-card:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); }
+.stat-icon { font-size: 28px; margin-bottom: 8px; }
+.stat-val { font-size: 24px; font-weight: 800; color: var(--tennis-green); margin-bottom: 4px; }
+.stat-lbl { font-size: 12px; color: var(--text-slate); }
+
+.info-box { background: rgba(255,255,255,0.02); border: 1px solid var(--border-white); border-radius: 16px; padding: 20px; margin-top: 20px; }
+.info-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 16px; }
 .info-grid { display: flex; flex-direction: column; gap: 8px; }
-.info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .info-row { display: flex; justify-content: space-between; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--border-white); }
 .info-k { color: var(--text-slate); font-size: 14px; }
 .info-v { color: #fff; font-size: 14px; font-weight: 600; }
