@@ -1028,6 +1028,7 @@ textarea:focus, input:focus { outline: none; }
   line-height: 1.15;
   color: var(--tennis-green);
   margin-bottom: 12px;
+  font-family: 'Cairo', sans-serif;
 }
 @media (max-width: 380px) { .hero-title { font-size: 26px; } }
 @media (min-width: 480px) { .hero-title { font-size: 38px; } }
@@ -1041,14 +1042,11 @@ textarea:focus, input:focus { outline: none; }
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: shimmer 5s ease-in-out infinite;
+  font-family: 'Cairo', sans-serif;
 }
 @media (max-width: 767px) {
   .hero-title span { color: var(--tennis-green); -webkit-text-fill-color: var(--tennis-green); }
 }
-@media (max-width: 380px) { .hero-title { font-size: 26px; } }
-@media (min-width: 480px) { .hero-title { font-size: 38px; } }
-@media (min-width: 768px) { .hero-title { font-size: 42px; margin-bottom: 18px; } }
-@media (min-width: 1024px) { .hero-title { font-size: 56px; } }
 
 .hero-title span {
   background: linear-gradient(90deg, #fff 0%, var(--tennis-green) 36%, #fff 68%, #94a3b8 100%);
@@ -1170,27 +1168,10 @@ textarea:focus, input:focus { outline: none; }
 .sec-sub { color: rgba(255,255,255,.4); font-size: 13px; margin-bottom: 20px; font-family: 'Cairo', sans-serif; }
 
 .stats-section .stats-header, .dict-section .dict-header {
-  position: sticky;
-  top: 0;
-  background: var(--bg-dark);
-  padding: 16px 0;
-  z-index: 10;
-  border-bottom: 1px solid var(--border-white);
   margin-bottom: 16px;
 }
 @media (min-width: 768px) {
-  .stats-section .stats-header, .dict-section .dict-header { position: static; border: none; padding: 0; margin-bottom: 20px; }
-}
-
-.dict-search-wrap {
-  position: sticky;
-  top: 80px;
-  background: var(--bg-dark);
-  padding: 12px 0;
-  z-index: 10;
-}
-@media (min-width: 768px) {
-  .dict-search-wrap { position: static; padding: 0; }
+  .stats-section .stats-header, .dict-section .dict-header { margin-bottom: 20px; }
 }
 
 /* ===================== CHAT PAGE ===================== */
@@ -1512,10 +1493,10 @@ textarea:focus, input:focus { outline: none; }
 @media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; } }
 
 .stat-card { 
-  background: rgba(255,255,255,0.03); 
+  background: linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
   border: 1px solid var(--border-white); 
   border-radius: 16px; 
-  padding: 16px; 
+  padding: 20px; 
   text-align: center;
   transition: all 0.3s;
 }
