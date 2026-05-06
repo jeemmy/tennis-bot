@@ -173,6 +173,7 @@ function Chat({ addQuestion }) {
   const [voiceMode, setVoiceMode] = useState(false); // وضع المحادثة الصوتية الحية
   const recognitionRef = useRef(null);
   const sendTimeoutRef = useRef(null);
+  const lastSentRef = useRef(""); //追踪 آخر نص تم إرساله لمنع التكرار
   const endRef = useRef(null);
 
   useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[msgs,loading]);
@@ -185,43 +186,60 @@ function Chat({ addQuestion }) {
       return;
     }
 
+    // إيقاف أي جلسة سابقة
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch(e) {}
+    }
+
     const recognition = new SpeechRecognition();
     recognition.lang = 'ar-SA';
-    recognition.continuous = true;
+    recognition.continuous = false; // استخدام غير مستمر لتجنب التكرار
     recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    let finalTranscript = "";
+    
     recognition.onresult = (event) => {
-      let transcript = '';
-      for (let i = 0; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-      }
+      // الحصول على أحدث نتيجة فقط
+      const result = event.results[event.results.length - 1];
+      const transcript = result[0].transcript.trim();
+      
       setInput(transcript);
 
-      // إذا كان في وضع المحادثة الصوتية الحية
-      if (voiceMode) {
-        // إلغاء المؤقت السابق
-        if (sendTimeoutRef.current) clearTimeout(sendTimeoutRef.current);
-        
-        // إذا انتهى الكلام (final result)
-        if (event.results[event.results.length - 1].isFinal) {
-          if (transcript.trim().length > 0) {
-            // إرسال تلقائي بعد التوقف بـ 1.5 ثانية
-            sendTimeoutRef.current = setTimeout(() => {
-              if (transcript.trim()) {
-                handleVoiceSend(transcript);
-              }
-            }, 1500);
-          }
+      // إذا كانresult نهائي وليس فارغ
+      if (result.isFinal && transcript.length > 0) {
+        // التأكد من أن النص مختلف عن آخر رسالة مرسلة
+        if (transcript !== lastSentRef.current && transcript.length >= 2) {
+          finalTranscript = transcript;
+          
+          // إرسال تلقائي بعد التوقف بـ 1 ثانية
+          sendTimeoutRef.current = setTimeout(() => {
+            handleVoiceSend(finalTranscript);
+          }, 1000);
         }
       }
     };
 
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
+      // إعادة المحاولة تلقائياً في حالة الخطأ
+      if (event.error !== 'aborted' && voiceMode) {
+        setTimeout(() => {
+          if (voiceMode && !isRecording) startVoiceRecognition();
+        }, 1000);
+      }
       setIsRecording(false);
     };
 
     recognition.onend = () => {
-      setIsRecording(false);
+      // إعادة التشغيل تلقائياً إذا كنا في وضع المحادثة الصوتية
+      if (voiceMode) {
+        setTimeout(() => {
+          if (voiceMode && !isRecording) startVoiceRecognition();
+        }, 500);
+      } else {
+        setIsRecording(false);
+      }
     };
 
     recognitionRef.current = recognition;
@@ -232,7 +250,7 @@ function Chat({ addQuestion }) {
   // إيقاف التعرف على الصوت
   const stopVoiceRecognition = () => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try { recognitionRef.current.stop(); } catch(e) {}
       recognitionRef.current = null;
     }
     if (sendTimeoutRef.current) {
@@ -241,10 +259,20 @@ function Chat({ addQuestion }) {
     setIsRecording(false);
   };
 
+  // إيقاف كامل للمحادثة الصوتية
+  const stopVoiceCompletely = () => {
+    stopVoiceRecognition();
+    lastSentRef.current = ""; // إعادة تعيين لمنع التكرار
+    setInput("");
+  };
+
   // إرسال الصوت للمادثة
   const handleVoiceSend = async (text) => {
     const t = text.trim();
     if (!t || loading) return;
+    
+    // تحديث lastSent لتجنب التكرار
+    lastSentRef.current = t;
     
     // إيقاف التعرف على الصوت مؤقتاً أثناء إرسال الرسالة
     stopVoiceRecognition();
@@ -354,7 +382,7 @@ function Chat({ addQuestion }) {
   const toggleVoiceMode = () => {
     if (voiceMode) {
       // إلغاء وضع المحادثة الصوتية
-      stopVoiceRecognition();
+      stopVoiceCompletely();
       setVoiceMode(false);
     } else {
       // تفعيل وضع المحادثة الصوتية
@@ -374,7 +402,7 @@ function Chat({ addQuestion }) {
         <span className={`online-dot ${voiceMode ? 'recording' : ''}`}/>
       </div>
 
-      <div className="chat-body">
+      <div className={`chat-body ${voiceMode ? 'with-voice-controls' : ''}`}>
         {msgs.map((m,i)=>(
           <div key={i} className={`msg-row ${m.role}`}>
             {m.role==="assistant"&&<span className="av bot">🎾</span>}
