@@ -68,7 +68,7 @@
   /* Large Logo */
   .logo-container {
     position: relative;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
     z-index: 1;
   }
 
@@ -87,8 +87,8 @@
 
   .logo-image {
     position: relative;
-    width: 140px;
-    height: 140px;
+    width: 280;
+    height: 280;
     border-radius: 32px;
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05));
     border: 2px solid rgba(16, 185, 129, 0.3);
@@ -102,7 +102,7 @@
   }
 
   .logo-image img {
-    width: 85%;
+    width: 95%;
     height: 85%;
     object-fit: contain;
   }
