@@ -72,32 +72,32 @@
     border-radius: 0;
   }
   
-  /* Scrollable Messages Area - more padding to avoid header/input overlap */
+  /* Scrollable Messages Area - accurate padding */
   .chat-body {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 58px 10px 145px 10px; /* Top: header height, Bottom: input + bottom nav */
+    padding: 55px 10px 110px 10px; /* Top: header ~50px, Bottom: input ~50px + nav ~60px */
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
   
   /* Fixed Input Bar with Voice Button inside */
   .input-bar {
     position: fixed;
-    bottom: 60px; /* Above bottom nav */
+    bottom: 60px;
     left: 0;
     right: 0;
     z-index: 99;
     background: rgba(6, 13, 26, 0.98);
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255,255,255,0.1);
-    padding: 8px 10px;
+    padding: 6px 8px;
     display: flex;
     align-items: center;
     gap: 6px;
-    flex-wrap: wrap;
+    min-height: 44px;
   }
   
   /* Voice Mode Button - inline in input bar */
@@ -125,14 +125,14 @@
   
   .voice-indicator {
     width: 100%;
-    padding: 6px;
+    padding: 4px;
     background: rgba(16, 185, 129, 0.2);
-    border-radius: 6px;
+    border-radius: 4px;
     color: #10b981;
-    font-size: 11px;
+    font-size: 10px;
     text-align: center;
-    margin-bottom: 4px;
-    order: -1; /* Show above input */
+    margin-bottom: 2px;
+    flex-shrink: 0;
   }
   
   /* Input field */
