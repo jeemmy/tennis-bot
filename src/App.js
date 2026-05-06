@@ -134,12 +134,6 @@ function Home({ setTab }) {
     { icon:"📖", title:"القاموس", desc:"مصطلحات التنس", tab:"dict" },
     { icon:"📊", title:"الإحصائيات", desc:"تتبع progress", tab:"stats" },
   ];
-
-  const stats = [
-    { num: "5M+", label: "متعلم نشط" },
-    { num: "98%", label: "رضا المستخدمين" },
-    { num: "24/7", label: "دعم فوري" },
-  ];
   
   return (
     <div className="home-section">
@@ -155,15 +149,6 @@ function Home({ setTab }) {
       <button className="home-cta" onClick={()=>setTab("chat")}>
         🚀 ابدأ المحادثة الآن
       </button>
-
-      <div className="home-stats">
-        {stats.map((s, i) => (
-          <div key={i} className="stat-box">
-            <div className="stat-number">{s.num}</div>
-            <div className="stat-label">{s.label}</div>
-          </div>
-        ))}
-      </div>
       
       <div className="home-features">
         {features.map((f, i) => (
@@ -632,8 +617,8 @@ textarea:focus, input:focus { outline: none; }
 .home-section::before { content: ''; position: absolute; top: -30%; left: 50%; transform: translateX(-50%); width: 800px; height: 800px; background: radial-gradient(circle, rgba(79,172,254,0.2) 0%, rgba(79,172,254,0.08) 35%, transparent 70%); filter: blur(80px); animation: pulse-float 6s ease-in-out infinite; }
 @keyframes pulse-float { 0%,100% { transform: translateX(-50%) translateY(0) scale(1); } 50% { transform: translateX(-50%) translateY(-20px) scale(1.05); } }
 
-.home-logo-box { position: relative; z-index: 2; margin-bottom: 40px; perspective: 1000px; }
-.home-logo { width: 240px; height: 240px; margin: 0 auto; background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%); border: 3px solid #fff; border-radius: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 40px 80px rgba(0,0,0,0.3), 0 0 0 20px rgba(79,172,254,0.15), inset 0 2px 8px rgba(255,255,255,0.8); animation: hover-lift 5s ease-in-out infinite; position: relative; overflow: hidden; }
+.home-logo-box { position: relative; z-index: 2; margin-bottom: 50px; perspective: 1000px; }
+.home-logo { width: 320px; height: 320px; margin: 0 auto; background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%); border: 4px solid #fff; border-radius: 70px; display: flex; align-items: center; justify-content: center; box-shadow: 0 50px 100px rgba(0,0,0,0.4), 0 0 0 25px rgba(79,172,254,0.2), inset 0 3px 10px rgba(255,255,255,0.9); animation: hover-lift 5s ease-in-out infinite; position: relative; overflow: hidden; }
 @keyframes hover-lift { 0%,100% { transform: translateY(0) rotateZ(0deg); } 50% { transform: translateY(-15px) rotateZ(3deg); } }
 .home-logo::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(79,172,254,0.1) 0%, transparent 100%); }
 .home-logo img { width: 75%; height: 75%; object-fit: contain; filter: drop-shadow(0 8px 16px rgba(79,172,254,0.4)); position: relative; z-index: 1; }
@@ -649,12 +634,6 @@ textarea:focus, input:focus { outline: none; }
 .home-cta:hover { transform: translateY(-8px) scale(1.08); box-shadow: 0 35px 80px rgba(79,172,254,0.55), 0 0 0 12px rgba(79,172,254,0.25); letter-spacing: 1px; }
 .home-cta:hover::before { transform: translateX(100%); }
 .home-cta:active { transform: translateY(-3px) scale(1.04); }
-
-.home-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; margin-top: 80px; position: relative; z-index: 2; max-width: 600px; margin-left: auto; margin-right: auto; }
-.stat-box { background: linear-gradient(145deg, rgba(79,172,254,0.15) 0%, rgba(79,172,254,0.05) 100%); border: 1.5px solid rgba(79,172,254,0.2); border-radius: 20px; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; backdrop-filter: blur(10px); transition: all 0.3s; }
-.stat-box:hover { border-color: rgba(79,172,254,0.4); background: linear-gradient(145deg, rgba(79,172,254,0.2) 0%, rgba(79,172,254,0.08) 100%); transform: translateY(-5px); }
-.stat-number { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #4ade80, #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.stat-label { font-size: 13px; color: rgba(255,255,255,0.6); font-weight: 500; text-align: center; }
 
 .home-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 18px; margin-top: 80px; position: relative; z-index: 2; }
 .home-feature { background: linear-gradient(145deg, rgba(79,172,254,0.1) 0%, rgba(79,172,254,0.02) 100%); border: 1px solid rgba(79,172,254,0.15); border-radius: 22px; padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; overflow: hidden; }
