@@ -347,10 +347,24 @@ function Chat({ addQuestion }) {
     window.speechSynthesis.speak(utter);
   };
   
-  // إيقاف النطق
+  // إيقاف النطق عند إيقاف المحادثة الصوتية
   const stopSpeaking = () => {
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
+    }
+  };
+  
+  // تفعيل/إلغاء وضع المحادثة الصوتية الحية
+  const toggleVoiceMode = () => {
+    if (voiceMode) {
+      // إلغاء وضع المحادثة الصوتية
+      stopVoiceCompletely();
+      stopSpeaking(); // إيقاف أي صوت正在进行
+      setVoiceMode(false);
+    } else {
+      // تفعيل وضع المحادثة الصوتية
+      setVoiceMode(true);
+      startVoiceRecognition();
     }
   };
 
@@ -360,19 +374,6 @@ function Chat({ addQuestion }) {
   };
 
   const fmt = t => t.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br/>");
-
-  // تفعيل/إلغاء وضع المحادثة الصوتية الحية
-  const toggleVoiceMode = () => {
-    if (voiceMode) {
-      // إلغاء وضع المحادثة الصوتية
-      stopVoiceCompletely();
-      setVoiceMode(false);
-    } else {
-      // تفعيل وضع المحادثة الصوتية
-      setVoiceMode(true);
-      startVoiceRecognition();
-    }
-  };
 
   return (
     <div className="chat-wrap">
