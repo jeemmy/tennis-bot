@@ -200,7 +200,6 @@ function Chat({ addQuestion }) {
   const [voiceState, setVoiceState] = useState("idle");
   const voiceStateRef = useRef("idle");
   const setVoiceStateSync = (s) => { voiceStateRef.current = s; setVoiceState(s); };
-const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef(null);
   const sendTimeoutRef = useRef(null);
   const lastSentRef = useRef("");
@@ -256,7 +255,6 @@ const [isRecording, setIsRecording] = useState(false);
 
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
-      setIsRecording(false);
       recognitionActiveRef.current = false;
       if (event.error !== 'aborted' && voiceMode) {
         setTimeout(() => {
@@ -266,7 +264,6 @@ const [isRecording, setIsRecording] = useState(false);
     };
 
     recognition.onend = () => {
-      setIsRecording(false);
       recognitionActiveRef.current = false;
 
       // Only restart if we're still in voice mode and listening/userSpeaking
@@ -281,7 +278,6 @@ const [isRecording, setIsRecording] = useState(false);
 
     recognitionRef.current = recognition;
     recognition.start();
-    setIsRecording(true);
     recognitionActiveRef.current = true;
   };
 
@@ -295,7 +291,6 @@ const [isRecording, setIsRecording] = useState(false);
     if (sendTimeoutRef.current) {
       clearTimeout(sendTimeoutRef.current);
     }
-    setIsRecording(false);
   };
 
   // إيقاف كامل للمحادثة الصوتية
