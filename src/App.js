@@ -198,21 +198,13 @@ function Chat({ addQuestion }) {
   const [loading, setLoading] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const [voiceState, setVoiceState] = useState("idle");
-  const voiceStateRef = useRef("idle");
-  const setVoiceStateSync = (s) => { voiceStateRef.current = s; setVoiceState(s); };
   const recognitionRef = useRef(null);
   const sendTimeoutRef = useRef(null);
   const lastSentRef = useRef("");
   const endRef = useRef(null);
   const utteranceRef = useRef(null);
   const abortRef = useRef(null);
-  const vadStreamRef = useRef(null);
-  const vadAudioContextRef = useRef(null);
-  const vadAnalyserRef = useRef(null);
-  const vadActiveRef = useRef(false);
   const recognitionActiveRef = useRef(false);
-  const vadFrameRef = useRef(null);
-  const interruptedRef = useRef(false);
 
   useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[msgs,loading]);
 
@@ -229,17 +221,20 @@ function Chat({ addQuestion }) {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = 'ar-SA';
-    recognition.continuous = false;
+    // Use continuous mode to keep recognition running and avoid frequent mic notifications
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
     let finalTranscript = "";
-    
+
     recognition.onresult = (event) => {
+      console.log('Speech recognition result:', event.results);
       const result = event.results[event.results.length - 1];
       const transcript = result[0].transcript.trim();
-      
+      console.log('Transcript:', transcript, 'isFinal:', result.isFinal);
+
       setInput(transcript);
 
       if (result.isFinal && transcript.length > 0) {
@@ -513,6 +508,7 @@ function Chat({ addQuestion }) {
 
   // تفعيل/إلغاء وضع المحادثة الصوتية
   const toggleVoiceMode = () => {
+    console.log('toggleVoiceMode called, current voiceMode:', voiceMode);
     if (voiceMode) {
       stopVoiceCompletely();
       stopSpeaking();
@@ -523,6 +519,7 @@ function Chat({ addQuestion }) {
     } else {
       setVoiceMode(true);
       setVoiceStateSync("listening");
+      console.log('Starting voice recognition and VAD...');
       startVoiceRecognition(); // Start recognition immediately
       startVAD(); // Start VAD for interruption detection
     }
