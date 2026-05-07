@@ -196,12 +196,24 @@ function Chat({ addQuestion }) {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
+  const [voiceState, setVoiceState] = useState("idle");
+  const voiceStateRef = useRef("idle");
+  const setVoiceStateSync = (s) => { voiceStateRef.current = s; setVoiceState(s); };
+const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef(null);
   const sendTimeoutRef = useRef(null);
   const lastSentRef = useRef("");
   const endRef = useRef(null);
+  const utteranceRef = useRef(null);
+  const abortRef = useRef(null);
+  const vadStreamRef = useRef(null);
+  const vadAudioContextRef = useRef(null);
+  const vadAnalyserRef = useRef(null);
+  const vadActiveRef = useRef(false);
+  const recognitionActiveRef = useRef(false);
+  const vadFrameRef = useRef(null);
+  const interruptedRef = useRef(false);
 
   useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[msgs,loading]);
 
@@ -234,6 +246,7 @@ function Chat({ addQuestion }) {
       if (result.isFinal && transcript.length > 0) {
         if (transcript !== lastSentRef.current && transcript.length >= 2) {
           finalTranscript = transcript;
+          setVoiceStateSync('processing');
           sendTimeoutRef.current = setTimeout(() => {
             handleVoiceSend(finalTranscript);
           }, 1000);
@@ -243,31 +256,38 @@ function Chat({ addQuestion }) {
 
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
+      setIsRecording(false);
+      recognitionActiveRef.current = false;
       if (event.error !== 'aborted' && voiceMode) {
         setTimeout(() => {
-          if (voiceMode && !isRecording) startVoiceRecognition();
+          if (voiceMode && !recognitionActiveRef.current) startVoiceRecognition();
         }, 1000);
       }
-      setIsRecording(false);
     };
 
     recognition.onend = () => {
-      if (voiceMode) {
+      setIsRecording(false);
+      recognitionActiveRef.current = false;
+
+      // Only restart if we're still in voice mode and listening/userSpeaking
+      if (voiceMode && (voiceStateRef.current === 'listening' || voiceStateRef.current === 'userSpeaking')) {
         setTimeout(() => {
-          if (voiceMode && !isRecording) startVoiceRecognition();
+          if (voiceMode && !recognitionActiveRef.current) {
+            startVoiceRecognition();
+          }
         }, 500);
-      } else {
-        setIsRecording(false);
       }
     };
 
     recognitionRef.current = recognition;
     recognition.start();
     setIsRecording(true);
+    recognitionActiveRef.current = true;
   };
 
   // إيقاف التعرف على الصوت
   const stopVoiceRecognition = () => {
+    recognitionActiveRef.current = false;
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch(e) {}
       recognitionRef.current = null;
@@ -289,14 +309,73 @@ function Chat({ addQuestion }) {
   const speakText = (text) => {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-    
+
     const clean = (text || '').replace(/<[^>]+>/g, '');
+    if (!clean.trim()) return;
+
     const utter = new SpeechSynthesisUtterance(clean);
-    const hasArabic = /[\u0600-\u06FF]/.test(clean);
+    const hasArabic = /[؀-ۿ]/.test(clean);
     utter.lang = hasArabic ? 'ar-SA' : 'en-US';
     utter.rate = 1;
     utter.pitch = 1;
-    
+
+    // Track utterance for interruption
+    utteranceRef.current = utter;
+    interruptedRef.current = false;
+
+    utter.onstart = () => {
+      console.log('TTS: started speaking');
+      setVoiceStateSync('aiSpeaking');
+      // Keep VAD active to allow interruption by voice
+      vadActiveRef.current = true;
+      if (!vadFrameRef.current) {
+        detectionLoop();
+      }
+    };
+
+    utter.onend = () => {
+      console.log('TTS: ended');
+      utteranceRef.current = null;
+      // Don't resume if was interrupted
+      if (interruptedRef.current) {
+        interruptedRef.current = false;
+        return;
+      }
+      // Resume listening for next user input
+      if (voiceMode) {
+        vadActiveRef.current = true;
+        setVoiceStateSync('listening');
+        // Restart speech recognition for next input
+        if (!recognitionActiveRef.current) {
+          startVoiceRecognition();
+        }
+        // Restart VAD loop
+        if (!vadFrameRef.current) {
+          detectionLoop();
+        }
+      }
+    };
+
+    utter.onerror = (e) => {
+      console.error('TTS error:', e);
+      utteranceRef.current = null;
+      if (interruptedRef.current) {
+        interruptedRef.current = false;
+        return;
+      }
+      if (voiceMode) {
+        vadActiveRef.current = true;
+        setVoiceStateSync('listening');
+        if (!recognitionActiveRef.current) {
+          startVoiceRecognition();
+        }
+        if (!vadFrameRef.current) {
+          detectionLoop();
+        }
+      }
+    };
+
+    console.log('TTS: speaking text:', clean.substring(0, 50) + '...');
     window.speechSynthesis.speak(utter);
   };
   
@@ -305,6 +384,136 @@ function Chat({ addQuestion }) {
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
+    utteranceRef.current = null;
+    setVoiceStateSync("idle");
+  };
+
+  // ===== Voice Activity Detection (VAD) using Web Audio API =====
+  const getRMS = () => {
+    const analyser = vadAnalyserRef.current;
+    if (!analyser) return 0;
+    const buffer = new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(buffer);
+    let sumSquares = 0;
+    for (let i = 0; i < buffer.length; i++) {
+      sumSquares += buffer[i] * buffer[i];
+    }
+    return Math.sqrt(sumSquares / buffer.length);
+  };
+
+  const detectionLoop = () => {
+    if (!vadActiveRef.current) return;
+    const rms = getRMS();
+    const isLoud = rms > 0.015;
+
+    if (isLoud) {
+      // Stop VAD while recognition is active
+      vadActiveRef.current = false;
+      if (voiceStateRef.current === 'aiSpeaking') {
+        // Interrupt AI speech
+        handleInterrupt();
+      } else {
+        setVoiceStateSync('userSpeaking');
+        // Start speech recognition
+        if (!recognitionActiveRef.current) {
+          startVoiceRecognition();
+        }
+      }
+      return;
+    }
+
+    // Continue detection loop
+    vadFrameRef.current = requestAnimationFrame(detectionLoop);
+  };
+
+  const startVAD = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
+          sampleRate: { ideal: 16000 }
+        }
+      });
+      vadStreamRef.current = stream;
+
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      vadAudioContextRef.current = audioContext;
+
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.8;
+      vadAnalyserRef.current = analyser;
+
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+      // Note: NOT connecting to destination to avoid hearing self
+
+      vadActiveRef.current = true;
+      setVoiceStateSync("listening");
+      detectionLoop();
+
+      // Start speech recognition immediately so user can speak right away
+      if (!recognitionActiveRef.current) {
+        startVoiceRecognition();
+      }
+    } catch (err) {
+      console.error('VAD setup failed:', err);
+      alert('لا يمكن الوصول للميكروفون. تأكد من منح الإذن.');
+      setVoiceMode(false);
+      setVoiceStateSync("idle");
+    }
+  };
+
+  const stopVAD = () => {
+    vadActiveRef.current = false;
+    if (vadFrameRef.current) {
+      cancelAnimationFrame(vadFrameRef.current);
+      vadFrameRef.current = null;
+    }
+    if (vadStreamRef.current) {
+      vadStreamRef.current.getTracks().forEach(track => track.stop());
+      vadStreamRef.current = null;
+    }
+    if (vadAudioContextRef.current && vadAudioContextRef.current.state !== 'closed') {
+      vadAudioContextRef.current.close();
+      vadAudioContextRef.current = null;
+    }
+    vadAnalyserRef.current = null;
+    setVoiceStateSync("idle");
+  };
+
+  // ===== Interruption Handler =====
+  const handleInterrupt = () => {
+    console.log('Interrupting AI speech');
+    interruptedRef.current = true;
+
+    // Stop AI speech immediately
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    utteranceRef.current = null;
+
+    // Cancel in-flight API request
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+
+    setLoading(false);
+    setVoiceStateSync("userSpeaking");
+
+    // Stop VAD temporarily
+    vadActiveRef.current = false;
+    if (vadFrameRef.current) {
+      cancelAnimationFrame(vadFrameRef.current);
+    }
+
+    // Start speech recognition to capture user's interruption
+    if (!recognitionActiveRef.current) {
+      startVoiceRecognition();
+    }
   };
 
   // تفعيل/إلغاء وضع المحادثة الصوتية
@@ -312,10 +521,15 @@ function Chat({ addQuestion }) {
     if (voiceMode) {
       stopVoiceCompletely();
       stopSpeaking();
+      stopVAD();
+      stopVoiceRecognition();
       setVoiceMode(false);
+      setVoiceStateSync("idle");
     } else {
       setVoiceMode(true);
-      startVoiceRecognition();
+      setVoiceStateSync("listening");
+      startVoiceRecognition(); // Start recognition immediately
+      startVAD(); // Start VAD for interruption detection
     }
   };
 
@@ -323,56 +537,70 @@ function Chat({ addQuestion }) {
   const sendWithRetry = async (text, retryCount = 0, maxRetries = 3) => {
     const t = text.trim();
     if (!t || loading) return;
-    
+
+    // Create AbortController for cancellation
+    const abortController = new AbortController();
+    abortRef.current = abortController;
+
     lastSentRef.current = t;
-    setInput("");
-    const next = [...msgs, { role: "user", content: t }];
+    setInput('');
+    const next = [...msgs, { role: 'user', content: t }];
     setMsgs(next); setLoading(true); addQuestion();
+    setVoiceStateSync('processing');
 
     try {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
         headers: {
-          "Authorization": `Bearer ${process.env.REACT_APP_OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:3000"
+          'Authorization': 'Bearer ' + process.env.REACT_APP_OPENROUTER_API_KEY,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'http://localhost:3000'
         },
         body: JSON.stringify({
-          model: "google/gemma-4-31b-it:free", 
+          model: 'google/gemma-4-31b-it:free',
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
+            { role: 'system', content: SYSTEM_PROMPT },
             ...next.map(m => ({ role: m.role, content: m.content }))
           ]
-        })
+        }),
+        signal: abortController.signal
       });
 
       const d = await res.json();
-      
+
       if (!res.ok) {
         if (retryCount < maxRetries) {
-          console.log(`Retry ${retryCount + 1}/${maxRetries}...`);
+          console.log('Retry ' + (retryCount + 1) + '/' + maxRetries + '...');
           setTimeout(() => sendWithRetry(text, retryCount + 1, maxRetries), 1000);
           return;
         }
-        setMsgs([...next, { role: "assistant", content: "🔄 جاري إعادة المحاولة..." }]);
+        setMsgs([...next, { role: 'assistant', content: '🔄 جاري إعادة المحاولة...' }]);
       } else {
-        const reply = d.choices?.[0]?.message?.content || "حدث خطأ في استلام الرد.";
-        setMsgs([...next, { role: "assistant", content: reply }]);
-        
+        const reply = d.choices?.[0]?.message?.content || 'حدث خطأ في استلام الرد.';
+        setMsgs([...next, { role: 'assistant', content: reply }]);
+
         if (voiceMode) {
-          setTimeout(() => speakText(reply), 500);
+          speakText(reply);
         }
       }
 
     } catch (error) {
+      // Don't update messages if request was aborted (interrupted)
+      if (error.name === 'AbortError') {
+        console.log('Request aborted due to interruption');
+        setLoading(false);
+        return;
+      }
+
       if (retryCount < maxRetries) {
-        console.log(`Retry ${retryCount + 1}/${maxRetries} due to error...`);
+        console.log('Retry ' + (retryCount + 1) + '/' + maxRetries + ' due to error...');
         setTimeout(() => sendWithRetry(text, retryCount + 1, maxRetries), 1500);
         return;
       }
-      setMsgs([...next, { role: "assistant", content: "🔄 حدث خطأ. حاول مجدداً." }]);
-    } finally { 
-      setLoading(false); 
+      setMsgs([...next, { role: 'assistant', content: '🔄 حدث خطأ. حاول مجدداً.' }]);
+    } finally {
+      abortRef.current = null;
+      setLoading(false);
     }
   };
 
@@ -395,10 +623,17 @@ function Chat({ addQuestion }) {
           <div className="chat-hdr-av"><CircleDot size={22} color="#4ade80" /></div>
           <div className="chat-hdr-info">
             <div className="chat-hdr-title">تنس بوت - المساعد الذكي</div>
-            <div className="chat-hdr-sub">{voiceMode ? <><Mic size={12} /> محادثة صوتية حية</> : "متخصص في التنس فقط"}</div>
+            <div className="chat-hdr-sub">{
+              voiceMode ?
+                voiceState === 'listening' ? <><Mic size={12} /> جاري الاستماع...</> :
+                voiceState === 'aiSpeaking' ? <><Volume2 size={12} /> جاري التحدث...</> :
+                voiceState === 'processing' ? 'جاري المعالجة...' :
+                voiceState === 'userSpeaking' ? <><Mic size={12} /> تحدث...</> :
+                'محادثة صوتية' :
+              "متخصص في التنس فقط"
+            }</div>
           </div>
         </div>
-        <span className="online-dot"/>
       </div>
 
       <div className={`chat-body ${voiceMode ? 'with-voice' : ''}`}>
@@ -428,11 +663,16 @@ function Chat({ addQuestion }) {
       )}
 
       <div className="input-bar">
-        <button 
+        <button
           className={`voice-toggle ${voiceMode ? 'active' : ''}`}
-          onClick={toggleVoiceMode}
+          onClick={voiceMode && voiceState === 'aiSpeaking' ? handleInterrupt : toggleVoiceMode}
         >
-          {voiceMode ? <><MicOff size={14} /> إيقاف المحادثة الصوتية</> : <><Mic size={14} /> محادثة صوتية</>}
+          {voiceMode ?
+            voiceState === 'listening' ? <><Mic size={14} /> جاري الاستماع...</> :
+            voiceState === 'aiSpeaking' ? <><Volume2 size={14} /> جاري التحدث (اضغط للمقاطعة)</> :
+            voiceState === 'processing' ? <><MicOff size={14} /> جاري المعالجة...</> :
+            <><MicOff size={14} /> إيقاف المحادثة الصوتية</>
+          : <><Mic size={14} /> محادثة صوتية</>}
         </button>
         
         <div className="input-row">
@@ -440,7 +680,14 @@ function Chat({ addQuestion }) {
             className="ta" 
             value={input} 
             disabled={loading}
-            placeholder={voiceMode ? "جاري الاستماع..." : "اسألني عن التنس..."}
+            placeholder={
+              voiceMode ?
+                voiceState === 'listening' ? 'جاري الاستماع...' :
+                voiceState === 'userSpeaking' ? 'تحدث...' :
+                voiceState === 'aiSpeaking' ? 'جاري التحدث...' :
+                'اسألني عن التنس...'
+              : "اسألني عن التنس..."
+            }
             onChange={e=>setInput(e.target.value)}
             onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} }}
           />
@@ -1201,7 +1448,7 @@ textarea:focus, input:focus { outline: none; }
 .chat-hdr-av { font-size: 20px; }
 .chat-hdr-title { font-size: 12px; font-weight: 700; color: var(--text-light); font-family: 'Cairo', sans-serif; }
 .chat-hdr-sub { font-size: 10px; color: var(--text-slate); font-family: 'Cairo', sans-serif; }
-.online-dot { width: 6px; height: 6px; background: var(--tennis-green); border-radius: 50%; margin-right: auto; animation: pulse 2s infinite; }
+
 
 .chat-body { 
   flex: 1; 
@@ -1251,7 +1498,6 @@ textarea:focus, input:focus { outline: none; }
 .chat-hdr-av { font-size: 32px; }
 .chat-hdr-title { font-size: 16px; font-weight: 700; color: var(--text-light); font-family: 'Cairo', sans-serif; }
 .chat-hdr-sub { font-size: 12px; color: var(--text-slate); font-family: 'Cairo', sans-serif; }
-.online-dot { width: 8px; height: 8px; background: var(--tennis-green); border-radius: 50%; margin-right: auto; animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
 .chat-body { 
